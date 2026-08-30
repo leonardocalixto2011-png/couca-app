@@ -76,6 +76,10 @@ export async function submitBooking(input: CreateBookingInput): Promise<SubmitRe
           },
         ],
         metadata: { kind: "booking", bookingId: booking.id, reference: booking.reference },
+        payment_intent_data: {
+          description: `Couca & Co. Beauty — dépôt RDV #${booking.reference.slice(-8)}`,
+          metadata: { kind: "booking", reference: booking.reference },
+        },
         success_url: `${origin}/reserver?confirmed=${booking.reference}`,
         cancel_url: `${origin}/reserver?cancelled=${booking.reference}`,
       });

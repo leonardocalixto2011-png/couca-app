@@ -71,6 +71,10 @@ export async function checkout(
         };
       }),
       metadata: { kind: "shop", orderId: order.id, reference: order.reference },
+      payment_intent_data: {
+        description: `Couca & Co. Beauty — boutique #${order.reference.slice(-8)}`,
+        metadata: { kind: "shop", reference: order.reference },
+      },
       success_url: `${origin}/boutique/merci?order=${order.reference}`,
       cancel_url: `${origin}/panier`,
     });
