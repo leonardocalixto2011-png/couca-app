@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale } from "@/i18n/LocaleProvider";
+import { useCart } from "./shop/CartProvider";
 import { Icon } from "./Icon";
 import { LangToggle } from "./LangToggle";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ const LINKS = [
 export function Nav() {
   const { t } = useLocale();
   const pathname = usePathname();
+  const cart = useCart();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -79,6 +81,18 @@ export function Nav() {
         </nav>
 
         <div className="flex items-center gap-2.5">
+          <Link
+            href="/panier"
+            aria-label={`${t("nav.cart")}${cart.count ? ` (${cart.count})` : ""}`}
+            className="relative inline-flex h-[46px] items-center rounded-full border border-[var(--line-gold)] px-3 text-[0.82rem] font-semibold text-ink hover:border-gold-muted"
+          >
+            {t("nav.cart")}
+            {cart.count > 0 && (
+              <span className="ml-1.5 inline-grid h-5 min-w-5 place-items-center rounded-full bg-terracotta px-1 text-[0.7rem] text-white tabular-nums">
+                {cart.count}
+              </span>
+            )}
+          </Link>
           <LangToggle />
           <Link href="/reserver" className="btn btn--sm hidden lg:inline-flex">
             <Icon name="instagram" />

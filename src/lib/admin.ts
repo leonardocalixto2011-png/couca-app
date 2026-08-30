@@ -43,3 +43,11 @@ export async function listBookings(filter: { status?: string } = {}) {
     include: { service: true },
   });
 }
+
+export async function adminListProducts() {
+  return prisma.product.findMany({ orderBy: { sortOrder: "asc" } });
+}
+
+export async function adminListOrders() {
+  return prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 200 });
+}

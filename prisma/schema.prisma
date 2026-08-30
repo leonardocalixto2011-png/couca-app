@@ -46,8 +46,10 @@ model Product {
   descriptionFr String?
   descriptionEn String?
   priceCents    Int
-  images        Json     @default("[]")
-  stock         Int      @default(0)
+  images        Json     @default("[]") // string[] of image URLs
+  // [{ nameFr, nameEn, values: [{ value, labelFr, labelEn }] }] — e.g. Krèm flavour
+  options       Json     @default("[]")
+  stock         Int?     // null = not tracked
   active        Boolean  @default(true)
   sortOrder     Int      @default(0)
   createdAt     DateTime @default(now())
@@ -167,17 +169,22 @@ enum OrderStatus {
 }
 
 model Order {
-  id                     String      @id @default(cuid())
-  reference              String      @unique @default(cuid())
-  status                 OrderStatus @default(PENDING)
-  contactEmail           String
-  items                  Json        @default("[]") // [{ productId, slug, nameFr, nameEn, priceCents, qty }]
-  subtotalCents          Int
+  id                      String      @id @default(cuid())
+  reference               String      @unique @default(cuid())
+  status                  OrderStatus @default(PENDING)
+  contactEmail            String
+  // [{ productId, slug, nameFr, nameEn, priceCents, qty, options: {name: value} }]
+  items                   Json        @default("[]")
+  subtotalCents           Int
+  shippingJson            Json? // Stripe-collected shipping address
+  locale                  String      @default("fr")
   stripeCheckoutSessionId String?
-  customerId             String?
-  customer               Customer?   @relation(fields: [customerId], references: [id])
-  createdAt              DateTime    @default(now())
-  updatedAt              DateTime    @updatedAt
+  customerId              String?
+  customer                Customer?   @relation(fields: [customerId], references: [id])
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+
+  @@index([status])
 }
 
 // ----------------------------------------------------------------------------

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { getBookingByReference, markDepositPaid } from "@/lib/booking";
+import { getOrderByReference, markOrderPaid } from "@/lib/shop";
+import { prisma } from "@/lib/prisma";
 import { sendBookingConfirmation } from "@/lib/email";
 import type { Locale } from "@/i18n/messages";
 
@@ -25,6 +27,25 @@ export async function POST(req: NextRequest) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const reference = session.metadata?.reference;
+    const kind = session.metadata?.kind;
+
+    if (kind === "shop" && reference) {
+      const order = await getOrderByReference(reference);
+      if (order && order.status === "PENDING") {
+        const shipping =
+          (session as unknown as { shipping_details?: unknown }).shipping_details ??
+          (session as unknown as { collected_information?: unknown }).collected_information ??
+          session.customer_details;
+        await markOrderPaid(order.id, shipping);
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { contactEmail: session.customer_details?.email ?? order.contactEmail },
+        });
+        console.info(`[shop] order ${reference} paid`);
+      }
+      return NextResponse.json({ received: true });
+    }
+
     if (reference) {
       const existing = await getBookingByReference(reference);
       if (existing && !existing.depositPaid) {

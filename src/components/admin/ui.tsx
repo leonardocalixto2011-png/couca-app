@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { setBookingStatus, deleteTimeOff } from "@/app/admin/actions";
+import { setBookingStatus, deleteTimeOff, setOrderStatus } from "@/app/admin/actions";
 import { cn } from "@/lib/utils";
 
 const STATUS_STYLE: Record<string, string> = {
@@ -40,6 +40,33 @@ export function StatusControl({ id, status }: { id: string; status: string }) {
       {Object.keys(STATUS_LABEL).map((s) => (
         <option key={s} value={s}>
           {STATUS_LABEL[s]}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+const ORDER_LABEL: Record<string, string> = {
+  PENDING: "En attente",
+  PAID: "Payée",
+  FULFILLED: "Expédiée",
+  CANCELLED: "Annulée",
+  REFUNDED: "Remboursée",
+};
+
+export function OrderStatusControl({ id, status }: { id: string; status: string }) {
+  const [pending, start] = useTransition();
+  return (
+    <select
+      defaultValue={status}
+      disabled={pending}
+      onChange={(e) => start(() => setOrderStatus(id, e.target.value))}
+      className="rounded-[var(--radius-lg)] border border-line bg-white px-2 py-1 text-[0.8rem]"
+      aria-label="Changer le statut de la commande"
+    >
+      {Object.keys(ORDER_LABEL).map((s) => (
+        <option key={s} value={s}>
+          {ORDER_LABEL[s]}
         </option>
       ))}
     </select>

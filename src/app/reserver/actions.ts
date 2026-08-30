@@ -75,7 +75,7 @@ export async function submitBooking(input: CreateBookingInput): Promise<SubmitRe
             },
           },
         ],
-        metadata: { bookingId: booking.id, reference: booking.reference },
+        metadata: { kind: "booking", bookingId: booking.id, reference: booking.reference },
         success_url: `${origin}/reserver?confirmed=${booking.reference}`,
         cancel_url: `${origin}/reserver?cancelled=${booking.reference}`,
       });

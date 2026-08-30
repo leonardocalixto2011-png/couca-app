@@ -189,6 +189,30 @@ const fr: Dict = {
   "footer.joinTitle": "Rejoindre",
   "footer.statement": "Les petits détails font toute la différence.",
 
+  "nav.cart": "Panier",
+  "shop.title": "Boutique",
+  "shop.intro": "Ramenez un peu du studio à la maison.",
+  "shop.addToCart": "Ajouter au panier",
+  "shop.added": "Ajouté ✓",
+  "shop.qty": "Quantité",
+  "shop.choose": "Choisissez",
+  "shop.soldOut": "Épuisé",
+  "shop.backToShop": "← Retour à la boutique",
+  "shop.cartTitle": "Votre panier",
+  "shop.cartEmpty": "Votre panier est vide.",
+  "shop.subtotal": "Sous-total",
+  "shop.shippingNote":
+    "La livraison ou la cueillette au studio est confirmée par courriel après la commande.",
+  "shop.checkout": "Passer à la caisse",
+  "shop.remove": "Retirer",
+  "shop.continue": "Continuer mes achats",
+  "shop.payUnavailable": "Le paiement n'est pas encore configuré. Réessayez bientôt.",
+  "shop.checkoutFailed": "Le paiement a échoué. Réessayez.",
+  "shop.thanksTitle": "Merci pour votre commande !",
+  "shop.thanksLead":
+    "Un courriel de confirmation suit. Nous vous écrirons pour la livraison ou la cueillette.",
+  "shop.orderRef": "Numéro de commande",
+
   "common.currencySuffix": " $",
 };
 
@@ -367,6 +391,29 @@ const en: Dict = {
   "footer.navTitle": "Navigate",
   "footer.joinTitle": "Connect",
   "footer.statement": "The small details make all the difference.",
+
+  "nav.cart": "Cart",
+  "shop.title": "Boutique",
+  "shop.intro": "Take a little of the studio home.",
+  "shop.addToCart": "Add to cart",
+  "shop.added": "Added ✓",
+  "shop.qty": "Quantity",
+  "shop.choose": "Choose",
+  "shop.soldOut": "Sold out",
+  "shop.backToShop": "← Back to the boutique",
+  "shop.cartTitle": "Your cart",
+  "shop.cartEmpty": "Your cart is empty.",
+  "shop.subtotal": "Subtotal",
+  "shop.shippingNote": "Shipping or studio pickup is confirmed by email after checkout.",
+  "shop.checkout": "Checkout",
+  "shop.remove": "Remove",
+  "shop.continue": "Continue shopping",
+  "shop.payUnavailable": "Payment isn't set up yet. Please try again soon.",
+  "shop.checkoutFailed": "Payment failed. Please try again.",
+  "shop.thanksTitle": "Thank you for your order!",
+  "shop.thanksLead":
+    "A confirmation email is on its way. We'll follow up about shipping or pickup.",
+  "shop.orderRef": "Order number",
 
   "common.currencySuffix": " $",
 };

@@ -79,3 +79,93 @@ export async function deleteTimeOff(id: string) {
 export async function adminSignOut() {
   await signOut({ redirectTo: "/admin/login" });
 }
+
+// ---------------------------------------------------------------------------
+// Boutique
+// ---------------------------------------------------------------------------
+
+function slugify(s: string) {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+}
+
+type ProductInput = {
+  nameFr: string;
+  nameEn: string;
+  descriptionFr: string;
+  descriptionEn: string;
+  priceDollars: number;
+  active: boolean;
+  imagesCsv: string;
+  optionsJson: string;
+};
+
+function parseProductInput(data: ProductInput) {
+  const nameFr = data.nameFr.trim();
+  const nameEn = data.nameEn.trim();
+  if (!nameFr || !nameEn) throw new Error("NAME_REQUIRED");
+  let options: unknown = [];
+  const raw = data.optionsJson.trim();
+  if (raw) {
+    try {
+      options = JSON.parse(raw);
+    } catch {
+      throw new Error("BAD_OPTIONS_JSON");
+    }
+    if (!Array.isArray(options)) throw new Error("BAD_OPTIONS_JSON");
+  }
+  return {
+    nameFr,
+    nameEn,
+    descriptionFr: data.descriptionFr.trim() || null,
+    descriptionEn: data.descriptionEn.trim() || null,
+    priceCents: Math.max(0, Math.round(data.priceDollars * 100)),
+    active: data.active,
+    images: data.imagesCsv
+      .split(/[\n,]/)
+      .map((s) => s.trim())
+      .filter(Boolean),
+    options: options as object,
+  };
+}
+
+export async function createProduct(data: ProductInput) {
+  await requireAdmin();
+  const parsed = parseProductInput(data);
+  const base = slugify(parsed.nameFr) || `produit-${Date.now()}`;
+  let slug = base;
+  for (let n = 2; await prisma.product.findUnique({ where: { slug } }); n++) slug = `${base}-${n}`;
+  const count = await prisma.product.count();
+  await prisma.product.create({ data: { ...parsed, slug, sortOrder: count } });
+  revalidatePath("/admin/products");
+  revalidatePath("/boutique");
+}
+
+export async function updateProduct(slug: string, data: ProductInput) {
+  await requireAdmin();
+  const parsed = parseProductInput(data);
+  await prisma.product.update({ where: { slug }, data: parsed });
+  revalidatePath("/admin/products");
+  revalidatePath("/boutique");
+  revalidatePath(`/boutique/${slug}`);
+}
+
+export async function deleteProduct(slug: string) {
+  await requireAdmin();
+  await prisma.product.delete({ where: { slug } });
+  revalidatePath("/admin/products");
+  revalidatePath("/boutique");
+}
+
+export async function setOrderStatus(id: string, status: string) {
+  await requireAdmin();
+  const allowed = ["PENDING", "PAID", "FULFILLED", "CANCELLED", "REFUNDED"];
+  if (!allowed.includes(status)) throw new Error("BAD_STATUS");
+  await prisma.order.update({ where: { id }, data: { status: status as never } });
+  revalidatePath("/admin/orders");
+}

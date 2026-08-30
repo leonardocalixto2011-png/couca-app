@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { Cormorant_Garamond, Inter, Great_Vibes } from "next/font/google";
 import "./globals.css";
 import { LocaleProvider } from "@/i18n/LocaleProvider";
+import { CartProvider } from "@/components/shop/CartProvider";
 import { LOCALE_COOKIE, normalizeLocale } from "@/i18n/messages";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
@@ -58,6 +59,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <LocaleProvider initialLocale={locale}>
+          <CartProvider>
           <a
             href="#main"
             className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[200] focus:rounded-full focus:bg-charcoal focus:px-5 focus:py-3 focus:text-sm focus:text-cream"
@@ -70,6 +72,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           </main>
           <Footer />
           <StickyBookBar />
+          </CartProvider>
         </LocaleProvider>
       </body>
     </html>
