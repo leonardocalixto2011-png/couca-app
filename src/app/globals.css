@@ -1,0 +1,224 @@
+@import "tailwindcss";
+
+/* ============================================================
+   COUCA & CO. BEAUTY — design system
+   Ported from the marketing site (index.html). Single warm
+   editorial world; every colour painted explicitly.
+   ============================================================ */
+
+@theme {
+  --color-cream: #faf8f5;
+  --color-blush: #f9ece8;
+  --color-blush-light: #f3d8d0;
+  --color-rose: #b86b6c;
+  --color-terracotta: #9e4b50;
+  --color-gold: #d4af37;
+  --color-gold-muted: #c5a059;
+  --color-charcoal: #2d2b2a;
+
+  --color-ink: #2d2b2a;
+  --color-ink-soft: #6f5f5b;
+  --color-ink-faint: #9a8a85;
+  --color-line: #e7d9d3;
+
+  --font-display: var(--font-cormorant), "Iowan Old Style", Georgia, serif;
+  --font-ui: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-script: var(--font-vibes), "Segoe Script", cursive;
+
+  --radius-lg: 18px;
+  --radius-xl: 28px;
+  --radius-2xl: 38px;
+  --radius-pill: 999px;
+
+  --shadow-soft-sm: 0 2px 14px -6px rgba(158, 75, 80, 0.18);
+  --shadow-soft-md: 0 22px 55px -28px rgba(158, 75, 80, 0.34);
+  --shadow-soft-lg: 0 40px 90px -40px rgba(45, 43, 42, 0.32);
+}
+
+:root {
+  --line-gold: color-mix(in srgb, var(--color-gold) 50%, transparent);
+  --section-pad: clamp(4.5rem, 3rem + 8vw, 8.5rem);
+  --nav-h: 74px;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--nav-h) + 18px);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--color-cream);
+    color: var(--color-ink);
+    font-family: var(--font-ui);
+    font-size: 1.06rem;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    color: var(--color-ink);
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  a {
+    color: var(--color-terracotta);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--color-rose);
+  }
+
+  ::selection {
+    background: var(--color-rose);
+    color: var(--color-cream);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+/* ---------- shared component classes ---------- */
+@layer components {
+  .container-x {
+    width: 100%;
+    max-width: 1180px;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 5vw, 2.75rem);
+  }
+
+  .section-pad {
+    padding-block: var(--section-pad);
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-terracotta);
+  }
+  .eyebrow::before {
+    content: "";
+    width: 26px;
+    height: 1px;
+    background: var(--color-gold-muted);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 48px;
+    padding: 1.05rem 1.7rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid transparent;
+    background: var(--color-terracotta);
+    color: #fff;
+    font-family: var(--font-ui);
+    font-size: 0.98rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: var(--shadow-soft-sm);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease,
+      border-color 0.25s ease, color 0.25s ease;
+  }
+  .btn:hover {
+    background: var(--color-rose);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft-md);
+  }
+  .btn:active {
+    transform: translateY(0);
+  }
+  .btn svg {
+    width: 1.05em;
+    height: 1.05em;
+    flex: none;
+  }
+  .btn--ghost {
+    background: transparent;
+    color: var(--color-ink);
+    border-color: var(--line-gold);
+    box-shadow: none;
+  }
+  .btn--ghost:hover {
+    background: color-mix(in srgb, var(--color-gold) 12%, transparent);
+    color: var(--color-ink);
+    border-color: var(--color-gold-muted);
+  }
+  .btn--sm {
+    min-height: 40px;
+    padding: 0.72rem 1.15rem;
+    font-size: 0.88rem;
+  }
+  .btn--block {
+    width: 100%;
+  }
+  .on-dark .btn--ghost {
+    color: var(--color-cream);
+    border-color: color-mix(in srgb, var(--color-gold) 45%, transparent);
+  }
+  .on-dark .btn--ghost:hover {
+    color: var(--color-cream);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

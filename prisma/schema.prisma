@@ -1,0 +1,232 @@
+// Couca & Co. Beauty — data model (Phase 1 scaffold).
+// Booking engine, boutique, customer accounts + loyalty, plus Auth.js models.
+// Migrations are deferred until DATABASE_URL points at a real Neon Postgres.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Catalogue
+// ----------------------------------------------------------------------------
+
+enum ServiceCategory {
+  GEL_SET
+  ADDON
+}
+
+model Service {
+  id             String          @id @default(cuid())
+  slug           String          @unique
+  category       ServiceCategory
+  nameFr         String
+  nameEn         String
+  descriptionFr  String?
+  descriptionEn  String?
+  priceCents     Int
+  // durationMin: PLACEHOLDER — awaiting owner confirmation of real service times.
+  durationMin    Int             @default(60)
+  active         Boolean         @default(true)
+  sortOrder      Int             @default(0)
+  bookings       Booking[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  nameFr        String
+  nameEn        String
+  descriptionFr String?
+  descriptionEn String?
+  priceCents    Int
+  images        Json     @default("[]")
+  stock         Int      @default(0)
+  active        Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ----------------------------------------------------------------------------
+// Availability
+// ----------------------------------------------------------------------------
+
+model BusinessHours {
+  id        String  @id @default(cuid())
+  // 0 = Sunday … 6 = Saturday
+  weekday   Int     @unique
+  isOpen    Boolean @default(false)
+  // minutes from midnight; PLACEHOLDER defaults — confirm real opening hours.
+  openMin   Int     @default(600) // 10:00
+  closeMin  Int     @default(1080) // 18:00
+}
+
+model TimeOff {
+  id        String   @id @default(cuid())
+  startAt   DateTime
+  endAt     DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+}
+
+// ----------------------------------------------------------------------------
+// Bookings
+// ----------------------------------------------------------------------------
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model Booking {
+  id                    String        @id @default(cuid())
+  reference             String        @unique @default(cuid())
+  status                BookingStatus @default(PENDING)
+
+  serviceId             String
+  service               Service       @relation(fields: [serviceId], references: [id])
+  addonSlugs            Json          @default("[]")
+
+  startAt               DateTime
+  endAt                 DateTime
+
+  contactName           String
+  contactEmail          String
+  contactPhone          String?
+  notes                 String?
+  locale                String        @default("fr")
+
+  estimatedTotalCents   Int?
+  depositCents          Int           @default(0)
+  stripePaymentIntentId String?
+
+  customerId            String?
+  customer              Customer?     @relation(fields: [customerId], references: [id])
+
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([startAt])
+  @@index([status])
+}
+
+// ----------------------------------------------------------------------------
+// Customers + Couca Club loyalty
+// ----------------------------------------------------------------------------
+
+model Customer {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  phone         String?
+  locale        String         @default("fr")
+  loyaltyVisits Int            @default(0)
+  userId        String?        @unique
+  user          User?          @relation(fields: [userId], references: [id])
+  bookings      Booking[]
+  loyaltyEvents LoyaltyEvent[]
+  orders        Order[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model LoyaltyEvent {
+  id          String    @id @default(cuid())
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id])
+  visitNumber Int
+  rewardKey   String // e.g. "club.r3.short"
+  redeemedAt  DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+// ----------------------------------------------------------------------------
+// Boutique orders
+// ----------------------------------------------------------------------------
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  CANCELLED
+  REFUNDED
+}
+
+model Order {
+  id                     String      @id @default(cuid())
+  reference              String      @unique @default(cuid())
+  status                 OrderStatus @default(PENDING)
+  contactEmail           String
+  items                  Json        @default("[]") // [{ productId, slug, nameFr, nameEn, priceCents, qty }]
+  subtotalCents          Int
+  stripeCheckoutSessionId String?
+  customerId             String?
+  customer               Customer?   @relation(fields: [customerId], references: [id])
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+// ----------------------------------------------------------------------------
+// Auth.js (v5) — Prisma adapter models
+// ----------------------------------------------------------------------------
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(CUSTOMER)
+  accounts      Account[]
+  sessions      Session[]
+  customer      Customer?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
