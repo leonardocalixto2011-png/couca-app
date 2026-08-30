@@ -107,7 +107,11 @@ model Booking {
   locale                String        @default("fr")
 
   estimatedTotalCents   Int?
-  depositCents          Int           @default(0)
+  // $20 flat, non-refundable, applied to the final in-studio bill (see src/lib/policy.ts)
+  depositCents          Int           @default(2000)
+  depositPaid           Boolean       @default(false)
+  depositForfeited      Boolean       @default(false)
+  cancelledAt           DateTime?
   stripePaymentIntentId String?
 
   customerId            String?

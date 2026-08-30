@@ -99,6 +99,38 @@ const fr: Dict = {
   "calc.book": "Réserver ce look",
   "calc.reset": "Réinitialiser le look",
 
+  "policy.depositTitle": "Dépôt",
+  "policy.deposit":
+    "Un dépôt de 20 $ est demandé à la réservation. Il n'est pas remboursable et est appliqué au montant final en studio.",
+  "policy.cancelTitle": "Annulation",
+  "policy.cancel":
+    "Report ou annulation sans frais jusqu'à 48 h avant le rendez-vous : le dépôt est conservé pour une prochaine visite. À moins de 48 h ou en cas d'absence, le dépôt est perdu.",
+
+  "book.step.service": "Service",
+  "book.step.date": "Date",
+  "book.step.time": "Heure",
+  "book.step.details": "Vos coordonnées",
+  "book.step.review": "Confirmation",
+  "book.pickDate": "Choisissez une date",
+  "book.pickTime": "Choisissez une heure",
+  "book.noSlots": "Aucune plage disponible ce jour-là. Essayez une autre date.",
+  "book.closed": "Fermé",
+  "book.name": "Nom complet",
+  "book.email": "Courriel",
+  "book.phone": "Téléphone",
+  "book.notes": "Note (optionnel)",
+  "book.back": "Retour",
+  "book.next": "Continuer",
+  "book.confirm": "Confirmer la réservation",
+  "book.duration": "Durée",
+  "book.estTotal": "Total estimé en studio",
+  "book.depositDue": "Dépôt à la réservation",
+  "book.confirmedTitle": "Réservation confirmée",
+  "book.confirmedLead":
+    "On a bien reçu votre demande. Un courriel de confirmation suit avec tous les détails.",
+  "book.reference": "Référence",
+  "book.addToLook": "add-ons",
+
   "club.eyebrow": "Fidélité",
   "club.p":
     "Une carte de fidélité pensée comme un petit rituel VIP. Chaque visite vous rapproche d'une attention offerte — touchez une visite pour voir votre progression.",
@@ -244,6 +276,38 @@ const en: Dict = {
   "calc.poseGel": "Gel Set — ",
   "calc.book": "Book this look",
   "calc.reset": "Reset the look",
+
+  "policy.depositTitle": "Deposit",
+  "policy.deposit":
+    "A $20 deposit is taken at booking. It is non-refundable and is applied to your final in-studio total.",
+  "policy.cancelTitle": "Cancellation",
+  "policy.cancel":
+    "Free reschedule or cancellation up to 48h before the appointment: the deposit is kept toward a future visit. Inside 48h, or a no-show, forfeits the deposit.",
+
+  "book.step.service": "Service",
+  "book.step.date": "Date",
+  "book.step.time": "Time",
+  "book.step.details": "Your details",
+  "book.step.review": "Review",
+  "book.pickDate": "Pick a date",
+  "book.pickTime": "Pick a time",
+  "book.noSlots": "No openings that day. Try another date.",
+  "book.closed": "Closed",
+  "book.name": "Full name",
+  "book.email": "Email",
+  "book.phone": "Phone",
+  "book.notes": "Note (optional)",
+  "book.back": "Back",
+  "book.next": "Continue",
+  "book.confirm": "Confirm booking",
+  "book.duration": "Duration",
+  "book.estTotal": "Estimated in-studio total",
+  "book.depositDue": "Deposit at booking",
+  "book.confirmedTitle": "Booking confirmed",
+  "book.confirmedLead":
+    "We've got your request. A confirmation email with all the details is on its way.",
+  "book.reference": "Reference",
+  "book.addToLook": "add-ons",
 
   "club.eyebrow": "Loyalty",
   "club.p":

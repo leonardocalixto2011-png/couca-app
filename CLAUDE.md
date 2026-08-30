@@ -29,27 +29,45 @@ Separate project from "CMAC Beauty" (a Shopify store).
 - ✅ `npm run build` passes clean. `/reserver` and `/boutique` are honest
   "coming soon" placeholders (`src/components/ComingSoon.tsx`).
 
-## KNOWN FACTS — never change (see `src/lib/brand.ts`)
+## KNOWN FACTS — never change (see `src/lib/brand.ts` + `src/lib/policy.ts`)
 
 Pricing: Pose Gel Courte 45 $ / Moyenne 50 $ / Longue 55 $. Add-ons: French +5 $,
 Nail Art Simple +5 $, 3D/Complex +10/15/20 $.
 Loyalty: 3rd visit = free Simple nail art; 5th = 15% off next full set;
 10th = free Deluxe Care Set + 25% off.
+**Deposit** (confirmed): $20 flat, non-refundable, applied to the final in-studio bill.
+**Cancellation** (confirmed): ≥48h notice → deposit kept toward a future visit;
+inside 48h or no-show → deposit forfeited.
+**Durations** (confirmed): Courte 45 min, Moyenne 60, Longue 75; +15 min per
+nail-art add-on. In `prisma/seed.ts` + `src/lib/policy.ts`.
 Booking today = Instagram DM (`https://ig.me/m/coucaandcobeauty`); the app
 replaces it — keep IG DM as a *secondary* contact only.
 
-## PLACEHOLDERS — need owner confirmation before Phase 2 ships
+## STILL PLACEHOLDER — need the owner
 
-`durationMin` per service, `BusinessHours` (seeded Tue–Sat 10:00–18:00),
-deposit amount/%, cancellation & no-show policy, boutique product list + prices.
-All are marked `PLACEHOLDER` in `prisma/schema.prisma` / `prisma/seed.ts`.
-Research market-standard ranges for a Québec nail studio and present as options
-to approve — never bake in as fact. No invented reviews / stats / certifications.
+- **Opening hours** — seeded Tue–Sat 10:00–18:00 in `prisma/seed.ts`
+  (`AWAITING OWNER'S REAL HOURS`). The booking engine reads `BusinessHours`, so
+  once the owner confirms, update the seed (or edit via admin in Phase 3).
+- **Boutique products** — schema only (`Product` model). No products seeded.
+  Await the owner's list, or keep boutique schema-only.
+No invented reviews / stats / certifications / hours / products.
 
-## Next phases
+## Phase 2 — in progress
 
-2. Booking engine — services + durations + hours → generated slots, no
-   double-booking, optional Stripe deposit, Resend confirmation email.
+- ✅ `src/lib/policy.ts` — confirmed deposit / cancellation / duration constants.
+- ✅ `src/lib/availability.ts` — pure slot-generation (open window × 15-min grid,
+  minus busy intervals, minus lead time). `src/lib/availability.test.ts` — 8
+  vitest cases pass (`npm test`).
+- ⬜ Server actions to query real availability (Prisma: BusinessHours + Bookings +
+  TimeOff) and create a PENDING booking inside a transaction (double-booking guard).
+- ⬜ `/reserver` multi-step flow (service+add-ons prefilled from calculator query →
+  date → slot → contact → review → confirm). Stripe deposit + Resend email are
+  clean stubs until those accounts exist (`STRIPE_SECRET_KEY` / `RESEND_API_KEY`).
+- ⬜ Needs a live `DATABASE_URL` (free Neon) + `npm run db:push && npm run db:seed`
+  before the flow can persist anything.
+
+## Later phases
+
 3. Admin dashboard (Auth.js ADMIN role) — services/hours/prices, bookings, time off.
 4. Boutique — products, cart, Stripe checkout, order management.
 5. Customer accounts + real Couca Club loyalty tracking.
