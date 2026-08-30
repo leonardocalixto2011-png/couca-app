@@ -135,10 +135,28 @@ hits `EPERM` renaming the locked query-engine DLL.
 - Verified: browse → pick flavour → cart → subtotal → checkout fallback message;
   admin products/orders render. build + 8 tests green.
 
-## Later phases
+## Phase 5 — customer accounts + real loyalty DONE (verified)
 
-5. Customer accounts + real Couca Club loyalty tracking.
-6. SEO (locale routing), polish, deploy to coucabeauty.ca (Vercel + Neon).
+- Credentials `authorize` now accepts any user with a `passwordHash` (not admin-only);
+  `src/proxy.ts` also guards `/compte/*` → `/connexion`.
+- `/connexion` (`AuthForms.tsx`, login + register tabs) → `src/app/connexion/actions.ts`
+  `registerCustomer` (creates User CUSTOMER + Customer; **links prior guest bookings by
+  email**). Then client `signIn("credentials")`.
+- `/compte` (`AccountView.tsx`) — greeting, real Couca Club card (from
+  `Customer.loyaltyVisits`), editable profile (name/phone → `updateProfile`),
+  booking history (by `customerId` or matching email), sign out.
+- `src/lib/loyalty.ts` — `creditBookingVisit` / `uncreditBookingVisit`, idempotent via
+  `Booking.loyaltyCounted`; writes a `LoyaltyEvent` per threshold reached (3/5/10).
+  Wired into admin `setBookingStatus`: COMPLETED → +1 visit, un-complete → −1.
+- `createBooking` now upserts a `Customer` by email and sets `booking.customerId`.
+- Verified via script: guest booking → register same email → booking attaches →
+  admin marks COMPLETED → visits 0→1 → repeat credit stays 1 (idempotent).
+  Build + 8 tests green.
+
+## Later phase
+
+6. SEO (locale routing, sitemap, JSON-LD), polish, deploy to coucabeauty.ca
+   (Vercel + Neon) — incl. wiring the Stripe webhook against the real URL.
 
 ## Setup notes
 

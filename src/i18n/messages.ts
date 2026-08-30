@@ -213,6 +213,24 @@ const fr: Dict = {
     "Un courriel de confirmation suit. Nous vous écrirons pour la livraison ou la cueillette.",
   "shop.orderRef": "Numéro de commande",
 
+  "nav.login": "Connexion",
+  "acc.loginTitle": "Connexion",
+  "acc.registerTitle": "Créer un compte",
+  "acc.tabLogin": "J'ai un compte",
+  "acc.tabRegister": "Nouveau compte",
+  "acc.password": "Mot de passe",
+  "acc.loginBtn": "Se connecter",
+  "acc.registerBtn": "Créer mon compte",
+  "acc.hello": "Bonjour",
+  "acc.signOut": "Déconnexion",
+  "acc.profile": "Mes informations",
+  "acc.save": "Enregistrer",
+  "acc.saved": "Enregistré ✓",
+  "acc.history": "Mes réservations",
+  "acc.noBookings": "Aucune réservation pour l'instant.",
+  "acc.nextReward": "Encore {k} visite(s) avant la prochaine attention offerte.",
+  "acc.maxReward": "Vous avez atteint tous les paliers du Couca Club — merci !",
+
   "common.currencySuffix": " $",
 };
 
@@ -414,6 +432,24 @@ const en: Dict = {
   "shop.thanksLead":
     "A confirmation email is on its way. We'll follow up about shipping or pickup.",
   "shop.orderRef": "Order number",
+
+  "nav.login": "Sign in",
+  "acc.loginTitle": "Sign in",
+  "acc.registerTitle": "Create an account",
+  "acc.tabLogin": "I have an account",
+  "acc.tabRegister": "New account",
+  "acc.password": "Password",
+  "acc.loginBtn": "Sign in",
+  "acc.registerBtn": "Create my account",
+  "acc.hello": "Hi",
+  "acc.signOut": "Sign out",
+  "acc.profile": "My details",
+  "acc.save": "Save",
+  "acc.saved": "Saved ✓",
+  "acc.history": "My bookings",
+  "acc.noBookings": "No bookings yet.",
+  "acc.nextReward": "{k} more visit(s) until the next reward.",
+  "acc.maxReward": "You've reached every Couca Club tier — thank you!",
 
   "common.currencySuffix": " $",
 };

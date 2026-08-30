@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { signOut } from "@/auth";
 import { STUDIO_TZ } from "@/lib/policy";
+import { creditBookingVisit, uncreditBookingVisit } from "@/lib/loyalty";
 import type { BookingStatus } from "@prisma/client";
 
 const STATUSES: BookingStatus[] = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"];
@@ -13,7 +14,7 @@ const STATUSES: BookingStatus[] = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLET
 export async function setBookingStatus(id: string, status: string) {
   await requireAdmin();
   if (!STATUSES.includes(status as BookingStatus)) throw new Error("BAD_STATUS");
-  await prisma.booking.update({
+  const updated = await prisma.booking.update({
     where: { id },
     data: {
       status: status as BookingStatus,
@@ -21,8 +22,12 @@ export async function setBookingStatus(id: string, status: string) {
       depositForfeited: status === "NO_SHOW",
     },
   });
+  if (status === "COMPLETED") await creditBookingVisit(id);
+  else if (updated.loyaltyCounted) await uncreditBookingVisit(id);
+
   revalidatePath("/admin");
   revalidatePath("/admin/bookings");
+  revalidatePath("/compte");
 }
 
 export async function updateService(

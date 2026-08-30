@@ -15,6 +15,7 @@ const LINKS = [
   { href: "/#inspo", key: "nav.inspo" },
   { href: "/#couca-club", key: "nav.club" },
   { href: "/boutique", key: "nav.boutique" },
+  { href: "/compte", key: "nav.account" },
   { href: "/#contact", key: "nav.contact" },
 ] as const;
 

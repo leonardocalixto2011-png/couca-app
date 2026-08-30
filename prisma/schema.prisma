@@ -114,6 +114,7 @@ model Booking {
   depositPaid           Boolean       @default(false)
   depositForfeited      Boolean       @default(false)
   cancelledAt           DateTime?
+  loyaltyCounted        Boolean       @default(false)
   stripePaymentIntentId String?
 
   customerId            String?

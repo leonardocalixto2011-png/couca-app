@@ -209,6 +209,13 @@ export async function createBooking(input: CreateBookingInput): Promise<CreatedB
     });
     if (overlappingOff) throw new Error("SLOT_TAKEN");
 
+    // Link (or create) the customer record by email so history + loyalty attach.
+    const customer = await tx.customer.upsert({
+      where: { email },
+      create: { email, name, phone: input.contactPhone?.trim() || null, locale: input.locale },
+      update: {},
+    });
+
     return tx.booking.create({
       data: {
         serviceId: service.id,
@@ -223,6 +230,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreatedB
         estimatedTotalCents: priceCents,
         depositCents: DEPOSIT_CENTS,
         status: "PENDING",
+        customerId: customer.id,
       },
     });
   });
