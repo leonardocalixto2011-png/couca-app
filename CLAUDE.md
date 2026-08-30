@@ -153,10 +153,39 @@ hits `EPERM` renaming the locked query-engine DLL.
   admin marks COMPLETED → visits 0→1 → repeat credit stays 1 (idempotent).
   Build + 8 tests green.
 
-## Later phase
+## Phase 6 — SEO + deploy readiness DONE (code side)
 
-6. SEO (locale routing, sitemap, JSON-LD), polish, deploy to coucabeauty.ca
-   (Vercel + Neon) — incl. wiring the Stripe webhook against the real URL.
+- `robots.ts` (disallows /admin /compte /panier /api), `sitemap.ts` (static + product pages).
+- JSON-LD: `NailSalon` in root layout (with 7d 13-18 opening hours), `Product` on
+  `/boutique/[slug]`. `src/components/JsonLd.tsx`.
+- Dynamic OG image: `src/app/opengraph-image.tsx` (`runtime = "nodejs"`, 1200x630,
+  blush→cream, headline). Satori needs `display:flex` on every multi-child div.
+- Branded `not-found.tsx` + `error.tsx`. `GET /api/health` → DB ping.
+- Prisma: datasource `directUrl = env("DIRECT_URL")` (Neon). **Initial migration
+  baselined**: `prisma/migrations/0_init/migration.sql` generated via
+  `migrate diff --from-empty`, `migrate resolve --applied 0_init` on the dev DB.
+- `package.json` `vercel-build` = `prisma generate && prisma migrate deploy && next build`
+  (Vercel auto-detects it).
+- `README.md` — full local + Vercel/Neon deploy runbook incl. the Stripe webhook step.
+
+### Not done (deliberately deferred)
+
+- **True locale routing** (`/fr` `/en` paths + hreflang). Current cookie-based i18n
+  (`couca-locale`) is fine for launch — FR is indexed as the primary market. Locale
+  routing is a follow-up that touches every route.
+- **Actual deployment** — needs the owner to create Neon + Vercel accounts, set env
+  vars, point the domain, and add the Stripe webhook endpoint.
+
+## Owner action items to go live
+
+1. Decide: Couca's own Stripe account, or keep the shared "cmac" one.
+2. Neon project → `DATABASE_URL` (pooled) + `DIRECT_URL` (direct).
+3. Vercel: import repo, set all env vars, deploy (runs `vercel-build`).
+4. Seed once against prod (`npx tsx prisma/seed.ts` with prod env + ADMIN_*).
+5. Point `coucabeauty.ca` at Vercel.
+6. Stripe webhook → `https://coucabeauty.ca/api/stripe/webhook`
+   (`checkout.session.completed`) → put signing secret in `STRIPE_WEBHOOK_SECRET`.
+7. Resend: verify a sending domain, set `RESEND_API_KEY` + `EMAIL_FROM`.
 
 ## Setup notes
 
