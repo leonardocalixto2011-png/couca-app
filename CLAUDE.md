@@ -91,9 +91,29 @@ hits `EPERM` renaming the locked query-engine DLL.
   Flow already branches to Checkout when they're present.
 - **Resend** — `RESEND_API_KEY` + verified `EMAIL_FROM` domain for real emails.
 
+## Phase 3 — admin dashboard DONE (verified)
+
+- Auth.js v5 Credentials + `bcryptjs`. Split config: `src/auth.config.ts` (edge-safe,
+  used by `src/proxy.ts`) + `src/auth.ts` (Node, has the Credentials provider).
+  Next 16 renamed `middleware.ts` → **`proxy.ts`** — same contract.
+- `src/proxy.ts` guards `/admin/*` (redirects non-ADMIN to `/admin/login`).
+- `/admin/login` (`LoginForm.tsx`, `signIn("credentials")`) + `(dash)` route group
+  with its own sidebar layout (`src/app/admin/(dash)/layout.tsx`, re-checks role):
+  - `/admin` — upcoming bookings + counts, inline status control
+  - `/admin/bookings` — filterable list, status select (confirm / cancel / complete /
+    no-show; NO_SHOW sets `depositForfeited`, CANCELLED sets `cancelledAt`)
+  - `/admin/hours` — per-weekday open toggle + open/close time → drives booking slots
+  - `/admin/services` — price ($) / duration (min) / active per service
+  - `/admin/time-off` — add (datetime-local, interpreted in studio TZ) / delete blocks
+- `src/app/admin/actions.ts` — every mutation `requireAdmin()` + `revalidatePath`.
+- `src/lib/admin.ts` (`requireAdmin`, `isAdmin`, `dashboardData`, `listBookings`),
+  `src/lib/fmt.ts` (studio-TZ date formatting), `src/components/admin/ui.tsx`.
+- Admin user seeded from `ADMIN_EMAIL` / `ADMIN_PASSWORD` env (dev: `admin@coucabeauty.ca`
+  / `couca-admin-dev`). Marketing `Nav`/`Footer`/`StickyBookBar` hidden on `/admin`.
+- Verified: guard redirects, credential login works, `updateHours` persists.
+
 ## Later phases
 
-3. Admin dashboard (Auth.js ADMIN role) — services/hours/prices, bookings, time off.
 4. Boutique — products, cart, Stripe checkout, order management.
 5. Customer accounts + real Couca Club loyalty tracking.
 6. SEO (locale routing), polish, deploy to coucabeauty.ca (Vercel + Neon).
