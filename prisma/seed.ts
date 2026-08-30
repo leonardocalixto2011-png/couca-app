@@ -5,6 +5,7 @@
  * OWNER-CONFIRMED. Hours: 7 days a week, 13:00–18:00.
  */
 import { PrismaClient, ServiceCategory } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -49,7 +50,22 @@ async function main() {
     });
   }
 
-  console.log(`Seeded ${SERVICES.length} services + placeholder hours.`);
+  // Admin user — from ADMIN_EMAIL / ADMIN_PASSWORD env vars (skipped if unset).
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (adminEmail && adminPassword) {
+    const passwordHash = await bcrypt.hash(adminPassword, 10);
+    await prisma.user.upsert({
+      where: { email: adminEmail },
+      update: { role: "ADMIN", passwordHash },
+      create: { email: adminEmail, name: "Couca & Co. Admin", role: "ADMIN", passwordHash },
+    });
+    console.log(`Admin user ready: ${adminEmail}`);
+  } else {
+    console.log("No ADMIN_EMAIL / ADMIN_PASSWORD set — skipped admin user.");
+  }
+
+  console.log(`Seeded ${SERVICES.length} services, hours 7d 13:00–18:00.`);
   console.log("Loyalty tiers (reference, enforced in app logic):", LOYALTY);
 }
 

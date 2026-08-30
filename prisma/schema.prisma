@@ -196,6 +196,7 @@ model User {
   emailVerified DateTime?
   image         String?
   role          UserRole  @default(CUSTOMER)
+  passwordHash  String? // set for ADMIN credentials login
   accounts      Account[]
   sessions      Session[]
   customer      Customer?

@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { Icon } from "./Icon";
 import { BRAND } from "@/lib/brand";
 
 export function Footer() {
   const { t } = useLocale();
+  const pathname = usePathname();
   const year = new Date().getFullYear();
+
+  if (pathname?.startsWith("/admin")) return null;
 
   return (
     <footer id="contact" className="on-dark bg-charcoal py-[clamp(3.5rem,2.5rem+5vw,6rem)] text-blush-light">

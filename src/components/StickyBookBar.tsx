@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { Icon } from "./Icon";
 import { cn } from "@/lib/utils";
 
 export function StickyBookBar() {
   const { t } = useLocale();
+  const pathname = usePathname();
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -22,6 +24,8 @@ export function StickyBookBar() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  if (pathname?.startsWith("/admin")) return null;
 
   return (
     <div

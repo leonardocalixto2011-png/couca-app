@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { Icon } from "./Icon";
 import { LangToggle } from "./LangToggle";
@@ -18,6 +19,7 @@ const LINKS = [
 
 export function Nav() {
   const { t } = useLocale();
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -40,6 +42,8 @@ export function Nav() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
+
+  if (pathname?.startsWith("/admin")) return null;
 
   return (
     <>
