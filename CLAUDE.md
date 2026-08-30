@@ -52,19 +52,44 @@ replaces it — keep IG DM as a *secondary* contact only.
   Await the owner's list, or keep boutique schema-only.
 No invented reviews / stats / certifications / hours / products.
 
-## Phase 2 — in progress
+## Phase 2 — booking engine DONE (verified end-to-end)
 
-- ✅ `src/lib/policy.ts` — confirmed deposit / cancellation / duration constants.
-- ✅ `src/lib/availability.ts` — pure slot-generation (open window × 15-min grid,
-  minus busy intervals, minus lead time). `src/lib/availability.test.ts` — 8
-  vitest cases pass (`npm test`).
-- ⬜ Server actions to query real availability (Prisma: BusinessHours + Bookings +
-  TimeOff) and create a PENDING booking inside a transaction (double-booking guard).
-- ⬜ `/reserver` multi-step flow (service+add-ons prefilled from calculator query →
-  date → slot → contact → review → confirm). Stripe deposit + Resend email are
-  clean stubs until those accounts exist (`STRIPE_SECRET_KEY` / `RESEND_API_KEY`).
-- ⬜ Needs a live `DATABASE_URL` (free Neon) + `npm run db:push && npm run db:seed`
-  before the flow can persist anything.
+- ✅ `src/lib/policy.ts` — confirmed deposit / cancellation / duration constants + studio TZ.
+- ✅ `src/lib/availability.ts` — pure slot generation. `availability.test.ts`: 8 vitest cases (`npm test`).
+- ✅ `src/lib/booking.ts` — `listCatalogue`, `openWeekdays`, `getDayAvailability`
+  (BusinessHours × Bookings × TimeOff, studio-TZ aware via date-fns-tz, 2h lead time),
+  `createBooking` (transaction + overlap/TimeOff guard), `getBookingByReference`, `markDepositPaid`.
+- ✅ `src/app/reserver/actions.ts` — `fetchSlots`, `submitBooking`. If `STRIPE_SECRET_KEY`
+  is set → Stripe Checkout Session for the $20 CAD deposit; else → confirm directly +
+  send confirmation email.
+- ✅ `src/app/api/stripe/webhook/route.ts` — `checkout.session.completed` → `depositPaid` +
+  `CONFIRMED` + email.
+- ✅ `src/lib/email.ts` — Resend via REST when `RESEND_API_KEY` set; else logs to console.
+- ✅ `src/lib/stripe.ts` — lazy client, null when unconfigured.
+- ✅ `/reserver` multi-step flow (`src/components/booking/BookingFlow.tsx` +
+  `BookingConfirmation.tsx`): service+add-ons (prefilled from `?length=&french=&simple=&art3d=`
+  off the calculator) → date (closed days disabled) → slot → contact → review (shows
+  duration, est. total, $20 deposit, policy) → confirm → `/reserver?confirmed=<ref>`.
+- ✅ Verified: booked Longue+Simple+3D (105 min) for a Tuesday 14:00 → row persisted
+  (18:00–19:45Z), overlapping slots removed, exact-slot re-book → `SLOT_TAKEN`, email stub logged.
+
+### Local database (dev)
+
+`prisma dev` runs a local Postgres (started once; daemonises). `.env` `DATABASE_URL`
+points at it **with `?sslmode=disable&pgbouncer=true&connection_limit=1`** — the
+`pgbouncer=true` is required (its proxy is transaction-mode; without it you get
+`prepared statement "s0" already exists`). Ports are assigned per machine
+(`npx prisma dev ls`). Prod uses Neon — `.env.example` keeps that string.
+Stop the Next dev server before `npm run build` on Windows, or `prisma generate`
+hits `EPERM` renaming the locked query-engine DLL.
+
+## Phase 2 — still needs the owner
+
+- **Opening hours** — seeded Tue–Sat 10:00–18:00 placeholder. Give real weekly hours.
+- **Stripe** — put the test keys in `.env` (`STRIPE_SECRET_KEY`,
+  `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET` from `stripe listen`).
+  Flow already branches to Checkout when they're present.
+- **Resend** — `RESEND_API_KEY` + verified `EMAIL_FROM` domain for real emails.
 
 ## Later phases
 

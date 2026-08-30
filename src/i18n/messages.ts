@@ -106,6 +106,7 @@ const fr: Dict = {
   "policy.cancel":
     "Report ou annulation sans frais jusqu'à 48 h avant le rendez-vous : le dépôt est conservé pour une prochaine visite. À moins de 48 h ou en cas d'absence, le dépôt est perdu.",
 
+  "book.title": "Réservation",
   "book.step.service": "Service",
   "book.step.date": "Date",
   "book.step.time": "Heure",
@@ -284,6 +285,7 @@ const en: Dict = {
   "policy.cancel":
     "Free reschedule or cancellation up to 48h before the appointment: the deposit is kept toward a future visit. Inside 48h, or a no-show, forfeits the deposit.",
 
+  "book.title": "Booking",
   "book.step.service": "Service",
   "book.step.date": "Date",
   "book.step.time": "Time",
