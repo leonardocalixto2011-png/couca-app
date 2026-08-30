@@ -1,9 +1,9 @@
 /**
  * Seed — Couca & Co. Beauty.
  *
- * PRICING, LOYALTY tiers and service DURATIONS below are OWNER-CONFIRMED.
- * BusinessHours is still a PLACEHOLDER (Tue–Sat 10:00–18:00) — replace with the
- * owner's real opening hours before the booking engine goes live.
+ * PRICING, LOYALTY tiers, service DURATIONS and OPENING HOURS below are
+ * OWNER-CONFIRMED. Hours: 13:00–18:00. Open DAYS assumed Tue–Sat — confirm with
+ * the owner (they gave the time range, not the days).
  */
 import { PrismaClient, ServiceCategory } from "@prisma/client";
 
@@ -37,13 +37,16 @@ async function main() {
     });
   }
 
-  // PLACEHOLDER opening hours — Tue–Sat 10:00–18:00. AWAITING OWNER'S REAL HOURS.
-  const openDays = [2, 3, 4, 5, 6];
+  // Opening hours: 13:00–18:00 (confirmed). Open days Tue–Sat (assumed — confirm).
+  const OPEN_MIN = 13 * 60; // 13:00
+  const CLOSE_MIN = 18 * 60; // 18:00
+  const openDays = [2, 3, 4, 5, 6]; // 0=Sun … 6=Sat
   for (let weekday = 0; weekday < 7; weekday++) {
+    const isOpen = openDays.includes(weekday);
     await prisma.businessHours.upsert({
       where: { weekday },
-      update: { isOpen: openDays.includes(weekday) },
-      create: { weekday, isOpen: openDays.includes(weekday), openMin: 600, closeMin: 1080 },
+      update: { isOpen, openMin: OPEN_MIN, closeMin: CLOSE_MIN },
+      create: { weekday, isOpen, openMin: OPEN_MIN, closeMin: CLOSE_MIN },
     });
   }
 
