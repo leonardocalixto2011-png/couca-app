@@ -112,9 +112,31 @@ hits `EPERM` renaming the locked query-engine DLL.
   / `couca-admin-dev`). Marketing `Nav`/`Footer`/`StickyBookBar` hidden on `/admin`.
 - Verified: guard redirects, credential login works, `updateHours` persists.
 
+## Phase 4 — boutique DONE (verified)
+
+- `Product.options` Json = variants: `[{nameFr,nameEn,values:[{value,labelFr,labelEn}]}]`.
+  `Order.items` snapshot + `shippingJson` + `locale`.
+- Seeded product: **Haitian Krèm premix 750 mL, $30 CAD, 7 flavours** (real, full
+  FR/EN copy in `prisma/seed.ts`). No invented beauty SKUs — owner adds those in
+  `/admin/products`.
+- `src/lib/shop.ts` — `listProducts`, `getProduct`, `validateCart` (re-checks price
+  + option validity server-side), `getOrderByReference`, `markOrderPaid`.
+- `src/components/shop/CartProvider.tsx` — client cart in `localStorage`
+  (`couca-cart`); nav shows a count badge.
+- `/boutique` grid · `/boutique/[slug]` (variant + qty + add) · `/panier` (`CartView`)
+  · `/boutique/merci` (`OrderThanks`, clears cart).
+- `src/app/boutique/actions.ts` `checkout()` — validates, creates PENDING `Order`,
+  opens Stripe Checkout (CA shipping + phone collection). Returns `PAYMENT_UNAVAILABLE`
+  (shown gracefully) when `STRIPE_SECRET_KEY` is absent.
+- Webhook branches on `session.metadata.kind` (`"shop"` vs `"booking"`); shop →
+  `Order` PAID + captures email/shipping.
+- Admin: `/admin/products` (create / edit / delete; price $, active, images CSV,
+  options as JSON) and `/admin/orders` (list + status select).
+- Verified: browse → pick flavour → cart → subtotal → checkout fallback message;
+  admin products/orders render. build + 8 tests green.
+
 ## Later phases
 
-4. Boutique — products, cart, Stripe checkout, order management.
 5. Customer accounts + real Couca Club loyalty tracking.
 6. SEO (locale routing), polish, deploy to coucabeauty.ca (Vercel + Neon).
 
