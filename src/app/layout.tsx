@@ -8,6 +8,7 @@ import { LOCALE_COOKIE, normalizeLocale } from "@/i18n/messages";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { StickyBookBar } from "@/components/StickyBookBar";
+import { JsonLd, nailSalonLd } from "@/components/JsonLd";
 import { BRAND } from "@/lib/brand";
 
 const cormorant = Cormorant_Garamond({
@@ -58,6 +59,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${cormorant.variable} ${inter.variable} ${vibes.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <JsonLd data={nailSalonLd()} />
         <LocaleProvider initialLocale={locale}>
           <CartProvider>
           <a

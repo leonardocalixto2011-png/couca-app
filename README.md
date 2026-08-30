@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Couca & Co. Beauty
 
-## Getting Started
+Bilingual (FR default / EN) booking + boutique web app for a boutique nail studio
+in Montréal / L'Assomption. Next.js 16 · React 19 · Tailwind v4 · Prisma 6 ·
+Auth.js v5 · Stripe · Resend.
 
-First, run the development server:
+## Local development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# 1. install
+npm install
+
+# 2. local Postgres (leave running in its own terminal)
+npx prisma dev
+
+# 3. env — copy and fill DATABASE_URL / DIRECT_URL from `prisma dev` output.
+#    Local DATABASE_URL MUST include `?sslmode=disable&pgbouncer=true&connection_limit=1`
+cp .env.example .env
+
+# 4. schema + data
+npm run db:migrate      # or: npx prisma migrate deploy
+npm run db:seed         # services, hours (7d 13:00-18:00), Krem product, admin user
+
+# 5. run
+npm run dev             # http://localhost:3000  (or PORT=3100 npm run dev)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Admin: `/admin/login` with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build       # prisma generate + next build
+npm test            # vitest (availability engine)
+npm run typecheck
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment
 
-## Learn More
+See `.env.example`. Required for a real deployment:
 
-To learn more about Next.js, take a look at the following resources:
+| var | where |
+|---|---|
+| `DATABASE_URL` / `DIRECT_URL` | Neon - pooled + direct connection strings |
+| `AUTH_SECRET` | `npx auth secret` |
+| `AUTH_URL` / `NEXT_PUBLIC_SITE_URL` | `https://coucabeauty.ca` |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | seeded admin login |
+| `STRIPE_SECRET_KEY` | Stripe -> API keys (test then live) |
+| `STRIPE_WEBHOOK_SECRET` | from the webhook endpoint you create (below) |
+| `RESEND_API_KEY` / `EMAIL_FROM` | Resend + a verified sending domain |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Without `STRIPE_SECRET_KEY` the app still runs: bookings confirm without an online
+deposit, and boutique checkout shows a "payment not configured" message.
+Without `RESEND_API_KEY` confirmation emails are logged to the server console.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy (Vercel + Neon)
 
-## Deploy on Vercel
+1. **Neon** - create a project. Copy the **pooled** string to `DATABASE_URL` and the
+   **direct** string to `DIRECT_URL`.
+2. **Vercel** - import the repo. Add all env vars. Vercel runs `vercel-build`
+   (`prisma generate && prisma migrate deploy && next build`) automatically.
+3. First deploy done -> seed once:
+   `DATABASE_URL=... DIRECT_URL=... ADMIN_EMAIL=... ADMIN_PASSWORD=... npx tsx prisma/seed.ts`
+4. **Domain** - point `coucabeauty.ca` at Vercel.
+5. **Stripe webhook** - Stripe Dashboard -> Developers -> Webhooks -> add endpoint
+   `https://coucabeauty.ca/api/stripe/webhook`, event `checkout.session.completed`.
+   Put its signing secret in `STRIPE_WEBHOOK_SECRET` and redeploy. This flips a paid
+   deposit/order to CONFIRMED/PAID and sends the confirmation email.
+6. Health check: `GET /api/health` -> `{ ok: true, db: "up" }`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app/` - routes. Marketing home `/`; booking `/reserver`; shop `/boutique`,
+  `/panier`; account `/compte`, `/connexion`; admin `/admin/*`.
+- `src/lib/` - `booking.ts` (availability + createBooking), `availability.ts` (pure,
+  tested), `shop.ts`, `loyalty.ts`, `policy.ts` (owner-confirmed rules), `brand.ts`
+  (KNOWN FACTS), `auth.ts` / `auth.config.ts`.
+- `src/i18n/` - flat message dicts + `LocaleProvider` (cookie `couca-locale`).
+- `prisma/` - `schema.prisma`, `migrations/`, `seed.ts`.
+
+See `CLAUDE.md` for the full build log and the owner-confirmed facts.

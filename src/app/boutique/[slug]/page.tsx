@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProduct, listProducts } from "@/lib/shop";
 import { ProductDetail } from "@/components/shop/ProductDetail";
+import { JsonLd, productLd } from "@/components/JsonLd";
 
 export async function generateStaticParams() {
   const products = await listProducts().catch(() => []);
@@ -27,6 +28,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   return (
     <section className="section-pad">
+      <JsonLd data={productLd(product)} />
       <div className="container-x">
         <ProductDetail product={product} />
       </div>
