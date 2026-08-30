@@ -2,8 +2,7 @@
  * Seed — Couca & Co. Beauty.
  *
  * PRICING, LOYALTY tiers, service DURATIONS and OPENING HOURS below are
- * OWNER-CONFIRMED. Hours: 13:00–18:00. Open DAYS assumed Tue–Sat — confirm with
- * the owner (they gave the time range, not the days).
+ * OWNER-CONFIRMED. Hours: 7 days a week, 13:00–18:00.
  */
 import { PrismaClient, ServiceCategory } from "@prisma/client";
 
@@ -37,10 +36,10 @@ async function main() {
     });
   }
 
-  // Opening hours: 13:00–18:00 (confirmed). Open days Tue–Sat (assumed — confirm).
+  // Opening hours: open 7 days a week, 13:00–18:00 (owner-confirmed).
   const OPEN_MIN = 13 * 60; // 13:00
   const CLOSE_MIN = 18 * 60; // 18:00
-  const openDays = [2, 3, 4, 5, 6]; // 0=Sun … 6=Sat
+  const openDays = [0, 1, 2, 3, 4, 5, 6]; // Sun … Sat — all days
   for (let weekday = 0; weekday < 7; weekday++) {
     const isOpen = openDays.includes(weekday);
     await prisma.businessHours.upsert({

@@ -62,8 +62,8 @@ model BusinessHours {
   id        String  @id @default(cuid())
   // 0 = Sunday … 6 = Saturday
   weekday   Int     @unique
-  isOpen    Boolean @default(false)
-  // minutes from midnight. Confirmed hours: 13:00–18:00.
+  isOpen    Boolean @default(true)
+  // minutes from midnight. Confirmed hours: 7 days a week, 13:00–18:00.
   openMin   Int     @default(780)  // 13:00
   closeMin  Int     @default(1080) // 18:00
 }
