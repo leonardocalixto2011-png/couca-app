@@ -8,41 +8,49 @@ import { PRICING } from "@/lib/brand";
 import { money } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
-type LengthKey = "courte" | "moyenne" | "longue";
+const DEFAULT_SERVICE = "acrylique-moyen";
 
 export function LookCalculator() {
   const { t } = useLocale();
-  const [length, setLength] = useState<LengthKey>("moyenne");
+  const [service, setService] = useState<string>(DEFAULT_SERVICE);
   const [french, setFrench] = useState(false);
+  const [chrome, setChrome] = useState(false);
   const [simple, setSimple] = useState(false);
   const [art3d, setArt3d] = useState(false);
   const [art3dPrice, setArt3dPrice] = useState<number>(15);
+  const [strass, setStrass] = useState(false);
 
   const { items, total } = useMemo(() => {
-    const base = PRICING.lengths.find((l) => l.key === length)!.price;
+    const base = PRICING.services.find((s) => s.slug === service) ?? PRICING.services[0];
     const list: { label: string; price: number; base?: boolean }[] = [
-      { label: t("calc.poseGel") + t(`calc.len.${length}`), price: base, base: true },
+      { label: t(`calc.svc.${base.key}`), price: base.price, base: true },
     ];
     if (french) list.push({ label: t("calc.addon.french"), price: PRICING.addons.french });
+    if (chrome) list.push({ label: t("calc.addon.chrome"), price: PRICING.addons.chrome });
     if (simple) list.push({ label: t("calc.addon.simple"), price: PRICING.addons.simple });
     if (art3d) list.push({ label: t("calc.addon.art3d"), price: art3dPrice });
+    if (strass) list.push({ label: t("calc.addon.strass"), price: PRICING.addons.strass });
     return { items: list, total: list.reduce((s, i) => s + i.price, 0) };
-  }, [length, french, simple, art3d, art3dPrice, t]);
+  }, [service, french, chrome, simple, art3d, art3dPrice, strass, t]);
 
   const bookHref = useMemo(() => {
-    const p = new URLSearchParams({ length, total: String(total) });
+    const p = new URLSearchParams({ service, total: String(total) });
     if (french) p.set("french", "1");
+    if (chrome) p.set("chrome", "1");
     if (simple) p.set("simple", "1");
     if (art3d) p.set("art3d", String(art3dPrice));
+    if (strass) p.set("strass", "1");
     return `/reserver?${p.toString()}`;
-  }, [length, french, simple, art3d, art3dPrice, total]);
+  }, [service, french, chrome, simple, art3d, art3dPrice, strass, total]);
 
   function reset() {
-    setLength("moyenne");
+    setService(DEFAULT_SERVICE);
     setFrench(false);
+    setChrome(false);
     setSimple(false);
     setArt3d(false);
     setArt3dPrice(15);
+    setStrass(false);
   }
 
   return (
@@ -60,22 +68,22 @@ export function LookCalculator() {
         <legend className="mb-3 font-ui text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-ink-soft">
           {t("calc.legendBase")}
         </legend>
-        <div className="flex flex-wrap gap-2.5">
-          {PRICING.lengths.map((l) => (
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+          {PRICING.services.map((s) => (
             <button
-              key={l.key}
+              key={s.slug}
               type="button"
-              aria-pressed={length === l.key}
-              onClick={() => setLength(l.key as LengthKey)}
+              aria-pressed={service === s.slug}
+              onClick={() => setService(s.slug)}
               className={cn(
-                "flex flex-1 min-w-[92px] flex-col items-center gap-0.5 rounded-[var(--radius-lg)] border px-3 py-3 text-center text-[0.92rem] font-medium transition-colors",
-                length === l.key
+                "flex flex-col items-center gap-0.5 rounded-[var(--radius-lg)] border px-3 py-3 text-center text-[0.86rem] font-medium leading-tight transition-colors",
+                service === s.slug
                   ? "border-terracotta bg-blush text-terracotta"
                   : "border-line text-ink-soft hover:border-gold-muted",
               )}
             >
-              {t(`calc.len.${l.key}`)}
-              <b className="font-ui text-[0.98rem] font-bold">{money(l.price)}</b>
+              {t(`calc.svc.${s.key}`)}
+              <b className="font-ui text-[0.98rem] font-bold">{money(s.price)}</b>
             </button>
           ))}
         </div>
@@ -87,6 +95,7 @@ export function LookCalculator() {
         </legend>
         <div className="flex flex-col gap-2.5">
           <Toggle checked={french} onChange={setFrench} label={t("calc.addon.french")} price="+5 $" />
+          <Toggle checked={chrome} onChange={setChrome} label={t("calc.addon.chrome")} price="+5 $" />
           <Toggle checked={simple} onChange={setSimple} label={t("calc.addon.simple")} price="+5 $" />
           <Toggle
             checked={art3d}
@@ -119,6 +128,7 @@ export function LookCalculator() {
               </div>
             </div>
           )}
+          <Toggle checked={strass} onChange={setStrass} label={t("calc.addon.strass")} price="+5 $" />
         </div>
       </fieldset>
 

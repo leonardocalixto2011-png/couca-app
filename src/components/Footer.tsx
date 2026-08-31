@@ -43,23 +43,45 @@ export function Footer() {
           </ul>
         </nav>
 
-        <div>
-          <h4 className="mb-4 font-ui text-[0.72rem] uppercase tracking-[0.2em] text-gold-muted">
-            {t("footer.joinTitle")}
-          </h4>
-          <ul className="flex flex-col gap-2.5 text-[0.94rem]">
-            <li>
-              <a href={BRAND.instagramProfile} target="_blank" rel="noopener" className="text-blush-light hover:text-cream">
-                Instagram {BRAND.instagramHandle}
-              </a>
-            </li>
-            <li>
-              <a href={`mailto:${BRAND.email}`} className="text-blush-light hover:text-cream">
-                {BRAND.email}
-              </a>
-            </li>
-            <li className="text-blush-light">{BRAND.areaServed}</li>
-          </ul>
+        <div className="flex flex-col gap-7">
+          <div>
+            <h4 className="mb-4 font-ui text-[0.72rem] uppercase tracking-[0.2em] text-gold-muted">
+              {t("footer.joinTitle")}
+            </h4>
+            <ul className="flex flex-col gap-2.5 text-[0.94rem]">
+              <li>
+                <a href={BRAND.instagramProfile} target="_blank" rel="noopener" className="text-blush-light hover:text-cream">
+                  Instagram {BRAND.instagramHandle}
+                </a>
+              </li>
+              <li>
+                <a href={`mailto:${BRAND.email}`} className="text-blush-light hover:text-cream">
+                  {BRAND.email}
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="mb-3 font-ui text-[0.72rem] uppercase tracking-[0.2em] text-gold-muted">
+              {t("footer.areasTitle")}
+            </h4>
+            <p className="text-[0.94rem] text-blush-light">{BRAND.serviceAreas.join(" · ")}</p>
+          </div>
+
+          <div>
+            <h4 className="mb-3 font-ui text-[0.72rem] uppercase tracking-[0.2em] text-gold-muted">
+              {t("footer.partnerTitle")}
+            </h4>
+            <a
+              href={BRAND.partner.url}
+              target="_blank"
+              rel="noopener"
+              className="text-[0.94rem] text-blush-light hover:text-cream"
+            >
+              {BRAND.partner.name}
+            </a>
+          </div>
         </div>
       </div>
 

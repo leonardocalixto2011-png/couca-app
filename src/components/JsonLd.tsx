@@ -18,10 +18,10 @@ export function nailSalonLd() {
     "@type": "NailSalon",
     name: BRAND.name,
     description:
-      "Nail studio boutique à Montréal et L'Assomption — pose gel, French finish, nail art 3D.",
+      "Nail studio boutique desservant Montréal, Laval, L'Assomption, Repentigny et Joliette — acrylique, Gel-X, Builder Gel, manucure russe, nail art.",
     url: base,
     email: BRAND.email,
-    areaServed: ["Montréal", "L'Assomption"],
+    areaServed: [...BRAND.serviceAreas],
     sameAs: [BRAND.instagramProfile],
     openingHoursSpecification: [
       {

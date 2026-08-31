@@ -43,7 +43,7 @@ export function Hero() {
           <div className="absolute inset-[6%_12%_14%_0] -rotate-[5deg] rounded-[var(--radius-2xl)] bg-gradient-to-br from-blush-light to-blush shadow-[var(--shadow-soft-md)]" />
           <div className="absolute inset-[12%_0_0_16%] overflow-hidden rounded-[var(--radius-2xl)] shadow-[var(--shadow-soft-lg)]">
             <Image
-              src="/img/web-8.jpg"
+              src="/img/web-4.jpg"
               alt={t("hero.imgAlt")}
               fill
               priority
@@ -56,7 +56,7 @@ export function Hero() {
             {t("promo.h2")}
           </span>
           <span className="absolute bottom-[6%] right-[-6%] inline-flex items-center gap-2 rounded-full bg-cream px-4 py-2.5 text-[0.78rem] font-semibold text-ink shadow-[var(--shadow-soft-md)]">
-            Pose gel • 45&nbsp;$+
+            {t("hero.priceBadge")}
           </span>
         </div>
       </div>

@@ -6,12 +6,10 @@ import { Icon } from "@/components/Icon";
 import { Reveal } from "@/components/Reveal";
 
 const SERVICES = [
-  { key: "courte", price: "45 $", icon: "nail" as const },
-  { key: "moyenne", price: "50 $", icon: "nail" as const },
-  { key: "longue", price: "55 $", icon: "nail" as const },
-  { key: "french", price: "+5 $", icon: "brush" as const },
-  { key: "simple", price: "+5 $", icon: "spark" as const },
-  { key: "art3d", price: "+10–20 $", icon: "gem" as const },
+  { key: "acrylique", icon: "nail" as const },
+  { key: "gelx", icon: "nail" as const },
+  { key: "builder", icon: "brush" as const },
+  { key: "russe", icon: "spark" as const },
 ];
 
 export function Services() {
@@ -29,7 +27,7 @@ export function Services() {
           </p>
         </Reveal>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {SERVICES.map((s) => (
             <Reveal
               as="article"
@@ -42,7 +40,7 @@ export function Services() {
               <h3 className="flex items-baseline justify-between gap-4 text-[clamp(1.3rem,1.12rem+0.8vw,1.6rem)]">
                 <span>{t(`svc.${s.key}.t`)}</span>
                 <span className="whitespace-nowrap font-ui text-[0.98rem] font-semibold text-terracotta">
-                  {s.price}
+                  {t(`svc.${s.key}.price`)}
                 </span>
               </h3>
               <p className="text-sm text-ink-soft">{t(`svc.${s.key}.d`)}</p>

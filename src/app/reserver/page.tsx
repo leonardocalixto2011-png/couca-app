@@ -5,10 +5,11 @@ import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
 
 export const metadata: Metadata = { title: "Réservation" };
 
+// Back-compat for old calculator links that used ?length=courte|moyenne|longue.
 const LENGTH_TO_SLUG: Record<string, string> = {
-  courte: "pose-gel-courte",
-  moyenne: "pose-gel-moyenne",
-  longue: "pose-gel-longue",
+  courte: "acrylique-court",
+  moyenne: "acrylique-moyen",
+  longue: "acrylique-long",
 };
 
 function first(v: string | string[] | undefined): string | undefined {
@@ -47,9 +48,20 @@ export default async function ReserverPage({
 
   const prefillAddons: string[] = [];
   if (first(sp.french)) prefillAddons.push("french-finish");
+  if (first(sp.chrome)) prefillAddons.push("chrome");
   if (first(sp.simple)) prefillAddons.push("nail-art-simple");
   if (first(sp.art3d)) prefillAddons.push("nail-art-3d");
+  if (first(sp.strass)) prefillAddons.push("strass-charms");
+
+  const serviceParam = first(sp.service);
   const lengthParam = first(sp.length);
+  const knownSlugs = new Set(sets.map((s) => s.slug));
+  const prefillService =
+    serviceParam && knownSlugs.has(serviceParam)
+      ? serviceParam
+      : lengthParam
+        ? LENGTH_TO_SLUG[lengthParam]
+        : undefined;
 
   return (
     <section className="section-pad">
@@ -59,7 +71,7 @@ export default async function ReserverPage({
           addons={addons}
           openWeekdays={weekdays}
           prefill={{
-            serviceSlug: lengthParam ? LENGTH_TO_SLUG[lengthParam] : undefined,
+            serviceSlug: prefillService,
             addonSlugs: prefillAddons,
           }}
         />

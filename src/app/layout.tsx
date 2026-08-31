@@ -34,11 +34,11 @@ const vibes = Great_Vibes({
 export const metadata: Metadata = {
   metadataBase: new URL(BRAND.domain),
   title: {
-    default: "Couca & Co. Beauty | Nail Studio Montréal & L'Assomption",
+    default: "Couca & Co. Beauty | Nail Studio – Montréal, Laval & Rive-Nord",
     template: "%s | Couca & Co. Beauty",
   },
   description:
-    "Couca & Co. Beauty — nail studio boutique à Montréal et L'Assomption. Pose gel, French finish, nail art 3D. Réservation en ligne.",
+    "Couca & Co. Beauty — nail studio boutique desservant Montréal, Laval, L'Assomption, Repentigny et Joliette. Acrylique, Gel-X, Builder Gel, manucure russe, nail art. Réservation en ligne.",
   openGraph: {
     type: "website",
     locale: "fr_CA",

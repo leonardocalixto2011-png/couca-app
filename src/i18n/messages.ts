@@ -12,9 +12,9 @@ export const LOCALE_COOKIE = "couca-locale";
 type Dict = Record<string, string>;
 
 const fr: Dict = {
-  "meta.title": "Couca & Co. Beauty | Nail Studio Montréal & L'Assomption",
+  "meta.title": "Couca & Co. Beauty | Nail Studio – Montréal, Laval & Rive-Nord",
   "meta.desc":
-    "Couca & Co. Beauty — nail studio boutique à Montréal et L'Assomption. Pose gel, French finish, nail art 3D. Réservation en ligne.",
+    "Couca & Co. Beauty — nail studio boutique desservant Montréal, Laval, L'Assomption, Repentigny et Joliette. Acrylique, Gel-X, Builder Gel, manucure russe, nail art. Réservation en ligne.",
 
   "nav.home": "Accueil",
   "nav.services": "Services",
@@ -39,30 +39,25 @@ const fr: Dict = {
   "hero.cta1": "Réserver en ligne",
   "hero.cta2": "Voir les prix",
   "hero.note": "Réservation en ligne — confirmation immédiate.",
+  "hero.priceBadge": "Dès 40 $",
   "hero.imgAlt":
-    "Pose en gel brun cat-eye avec fleurs 3D, chrome doré et perles, réalisée chez Couca & Co. Beauty",
+    "Manucure française élégante à pois avec accent strass",
 
   "services.h2": "Un menu court, pensé pour durer",
   "services.p":
     "Chaque service est net et compréhensible en quelques secondes. On élève la base, on ajoute des détails seulement s'ils servent le look.",
-  "svc.courte.t": "Pose Gel — Courte",
-  "svc.courte.d":
-    "La base soignée : préparation, pose gel et finition brillante pour un port confortable au quotidien.",
-  "svc.moyenne.t": "Pose Gel — Moyenne",
-  "svc.moyenne.d":
-    "Un peu plus de longueur pour une allure allongée, tout en gardant un geste naturel.",
-  "svc.longue.t": "Pose Gel — Longue",
-  "svc.longue.d":
-    "L'effet éditorial : longueur affirmée, forme travaillée, fini impeccable.",
-  "svc.french.t": "French Finish",
-  "svc.french.d":
-    "La French revisitée : ligne fine et propre, sur mesure selon la couleur choisie.",
-  "svc.simple.t": "Nail Art Simple",
-  "svc.simple.d":
-    "Quelques touches graphiques : lignes, points dorés, accent minimal sur un ou deux ongles.",
-  "svc.art3d.t": "Nail Art 3D / Charms",
-  "svc.art3d.d":
-    "Reliefs, perles, cœurs et charms posés à la main. Le prix suit la complexité du design.",
+  "svc.acrylique.t": "Pose en acrylique",
+  "svc.acrylique.d": "Extensions solides et personnalisables.",
+  "svc.acrylique.price": "45 $+",
+  "svc.gelx.t": "Gel-X",
+  "svc.gelx.d": "Extensions en gel, légères et naturelles.",
+  "svc.gelx.price": "45 $+",
+  "svc.builder.t": "Builder Gel / Bio Gel",
+  "svc.builder.d": "Renforcement de l'ongle naturel ou légère extension.",
+  "svc.builder.price": "45 $+",
+  "svc.russe.t": "Manucure russe",
+  "svc.russe.d": "Travail précis des cuticules pour une finition très nette.",
+  "svc.russe.price": "40 $",
 
   "promo.badge": "Prix de lancement",
   "promo.h2": "Modèles recherchés",
@@ -75,27 +70,42 @@ const fr: Dict = {
   "prix.p":
     "Les tarifs ci-dessous sont clairs et sans surprise. Le calculateur assemble votre estimation en direct — le montant final est confirmé en studio selon vos ongles.",
   "prix.listTitle": "Grille de tarifs",
-  "prix.art3dName": "Nail Art Complexe / 3D",
-  "prix.art3dSub": "selon la complexité du design",
+  "prix.extrasTitle": "Extras",
+  "prix.extras":
+    "French +5 $ · chrome +5 $ · nail art simple +5 $ · nail art complexe/3D +10 à 20 $ · strass/charms +5 $ et plus selon le design.",
   "prix.note":
     "Offre à durée limitée. Aucune date de fin fixée pour le moment.",
+
+  "menu.acrylique": "Acrylique",
+  "menu.gelx": "Gel-X",
+  "menu.builder": "Builder Gel / Bio Gel",
+  "menu.russe": "Manucure russe",
+  "menu.len.court": "court",
+  "menu.len.moyen": "moyen",
+  "menu.len.long": "long",
 
   "calc.title": "Calculateur de look",
   "calc.sub":
     "Estimation indicative — pas un paiement. Le total se met à jour instantanément.",
-  "calc.legendBase": "Base — Pose Gel",
-  "calc.legendFin": "Finitions & nail art",
-  "calc.len.courte": "Courte",
-  "calc.len.moyenne": "Moyenne",
-  "calc.len.longue": "Longue",
-  "calc.addon.french": "French Finish",
-  "calc.addon.simple": "Nail Art Simple",
-  "calc.addon.art3d": "Nail Art Complexe / 3D",
+  "calc.legendBase": "Service de base",
+  "calc.legendFin": "Finitions & extras",
+  "calc.svc.acryliqueCourt": "Acrylique – court",
+  "calc.svc.acryliqueMoyen": "Acrylique – moyen",
+  "calc.svc.acryliqueLong": "Acrylique – long",
+  "calc.svc.gelxCourt": "Gel-X – court",
+  "calc.svc.gelxMoyen": "Gel-X – moyen",
+  "calc.svc.gelxLong": "Gel-X – long",
+  "calc.svc.builderGel": "Builder Gel / Bio Gel",
+  "calc.svc.manucureRusse": "Manucure russe",
+  "calc.addon.french": "French",
+  "calc.addon.chrome": "Chrome",
+  "calc.addon.simple": "Nail art simple",
+  "calc.addon.art3d": "Nail art complexe / 3D",
   "calc.addon.art3dSub": "reliefs, perles, charms",
+  "calc.addon.strass": "Strass / charms",
   "calc.segHelp": "Choisissez le niveau de détail :",
   "calc.summaryTitle": "Votre look",
   "calc.totalLabel": "Total estimé",
-  "calc.poseGel": "Pose Gel — ",
   "calc.book": "Réserver ce look",
   "calc.reset": "Réinitialiser le look",
 
@@ -119,6 +129,8 @@ const fr: Dict = {
   "book.name": "Nom complet",
   "book.email": "Courriel",
   "book.phone": "Téléphone",
+  "book.zone": "Secteur",
+  "book.zonePlaceholder": "Choisissez un secteur",
   "book.notes": "Note (optionnel)",
   "book.back": "Retour",
   "book.next": "Continuer",
@@ -184,9 +196,11 @@ const fr: Dict = {
   "ig.follow": "S'abonner sur Instagram",
 
   "footer.tag":
-    "Vos ongles, mais élevés. Un studio feutré à Montréal et L'Assomption, pour des poses soignées qui tiennent.",
+    "Vos ongles, mais élevés. Un studio feutré à Montréal, Laval et sur la Rive-Nord, pour des poses soignées qui tiennent.",
   "footer.navTitle": "Naviguer",
   "footer.joinTitle": "Rejoindre",
+  "footer.partnerTitle": "Partenaire officiel",
+  "footer.areasTitle": "Secteurs desservis",
   "footer.statement": "Les petits détails font toute la différence.",
 
   "nav.cart": "Panier",
@@ -235,9 +249,9 @@ const fr: Dict = {
 };
 
 const en: Dict = {
-  "meta.title": "Couca & Co. Beauty | Nail Studio Montréal & L'Assomption",
+  "meta.title": "Couca & Co. Beauty | Nail Studio – Montréal, Laval & Rive-Nord",
   "meta.desc":
-    "Couca & Co. Beauty — boutique nail studio in Montréal and L'Assomption. Gel sets, French finish, 3D nail art. Book online.",
+    "Couca & Co. Beauty — boutique nail studio serving Montréal, Laval, L'Assomption, Repentigny and Joliette. Acrylic, Gel-X, Builder Gel, Russian manicure, nail art. Book online.",
 
   "nav.home": "Home",
   "nav.services": "Services",
@@ -262,30 +276,25 @@ const en: Dict = {
   "hero.cta1": "Book online",
   "hero.cta2": "See pricing",
   "hero.note": "Book online — instant confirmation.",
+  "hero.priceBadge": "From $40",
   "hero.imgAlt":
-    "Brown cat-eye gel set with 3D flowers, gold chrome and pearls, done at Couca & Co. Beauty",
+    "Elegant French manicure with dots and rhinestone accent",
 
   "services.h2": "A short menu, built to last",
   "services.p":
     "Every service is clear and easy to grasp in seconds. We elevate the base and add details only when they serve the look.",
-  "svc.courte.t": "Gel Set — Short",
-  "svc.courte.d":
-    "The polished base: prep, gel application and a glossy finish for comfortable everyday wear.",
-  "svc.moyenne.t": "Gel Set — Medium",
-  "svc.moyenne.d":
-    "A little more length for an elongated look, while keeping a natural feel.",
-  "svc.longue.t": "Gel Set — Long",
-  "svc.longue.d":
-    "The editorial effect: bold length, worked shape, flawless finish.",
-  "svc.french.t": "French Finish",
-  "svc.french.d":
-    "The French, reimagined: a fine, clean line, tailored to your chosen colour.",
-  "svc.simple.t": "Simple Nail Art",
-  "svc.simple.d":
-    "A few graphic touches: lines, gold dots, a minimal accent on one or two nails.",
-  "svc.art3d.t": "3D Nail Art / Charms",
-  "svc.art3d.d":
-    "Reliefs, pearls, hearts and charms placed by hand. Price follows the design's complexity.",
+  "svc.acrylique.t": "Acrylic set",
+  "svc.acrylique.d": "Strong, customizable extensions.",
+  "svc.acrylique.price": "$45+",
+  "svc.gelx.t": "Gel-X",
+  "svc.gelx.d": "Gel extensions, light and natural.",
+  "svc.gelx.price": "$45+",
+  "svc.builder.t": "Builder Gel / Bio Gel",
+  "svc.builder.d": "Strengthen the natural nail, or a light extension.",
+  "svc.builder.price": "$45+",
+  "svc.russe.t": "Russian manicure",
+  "svc.russe.d": "Precise cuticle work for a very clean finish.",
+  "svc.russe.price": "$40",
 
   "promo.badge": "Launch pricing",
   "promo.h2": "Models wanted",
@@ -298,25 +307,40 @@ const en: Dict = {
   "prix.p":
     "The prices below are clear and honest. The calculator builds your estimate live — the final amount is confirmed in-studio based on your nails.",
   "prix.listTitle": "Price list",
-  "prix.art3dName": "Complex / 3D Nail Art",
-  "prix.art3dSub": "based on the design's complexity",
+  "prix.extrasTitle": "Extras",
+  "prix.extras":
+    "French +$5 · chrome +$5 · simple nail art +$5 · complex/3D nail art +$10–20 · rhinestones/charms +$5 and up depending on the design.",
   "prix.note": "Limited-time offer. No end date set for now.",
+
+  "menu.acrylique": "Acrylic",
+  "menu.gelx": "Gel-X",
+  "menu.builder": "Builder Gel / Bio Gel",
+  "menu.russe": "Russian manicure",
+  "menu.len.court": "short",
+  "menu.len.moyen": "medium",
+  "menu.len.long": "long",
 
   "calc.title": "Look calculator",
   "calc.sub": "Indicative estimate — not a payment. The total updates instantly.",
-  "calc.legendBase": "Base — Gel Set",
-  "calc.legendFin": "Finishes & nail art",
-  "calc.len.courte": "Short",
-  "calc.len.moyenne": "Medium",
-  "calc.len.longue": "Long",
-  "calc.addon.french": "French Finish",
-  "calc.addon.simple": "Simple Nail Art",
-  "calc.addon.art3d": "Complex / 3D Nail Art",
+  "calc.legendBase": "Base service",
+  "calc.legendFin": "Finishes & extras",
+  "calc.svc.acryliqueCourt": "Acrylic – short",
+  "calc.svc.acryliqueMoyen": "Acrylic – medium",
+  "calc.svc.acryliqueLong": "Acrylic – long",
+  "calc.svc.gelxCourt": "Gel-X – short",
+  "calc.svc.gelxMoyen": "Gel-X – medium",
+  "calc.svc.gelxLong": "Gel-X – long",
+  "calc.svc.builderGel": "Builder Gel / Bio Gel",
+  "calc.svc.manucureRusse": "Russian manicure",
+  "calc.addon.french": "French",
+  "calc.addon.chrome": "Chrome",
+  "calc.addon.simple": "Simple nail art",
+  "calc.addon.art3d": "Complex / 3D nail art",
   "calc.addon.art3dSub": "reliefs, pearls, charms",
+  "calc.addon.strass": "Rhinestones / charms",
   "calc.segHelp": "Choose the level of detail:",
   "calc.summaryTitle": "Your look",
   "calc.totalLabel": "Estimated total",
-  "calc.poseGel": "Gel Set — ",
   "calc.book": "Book this look",
   "calc.reset": "Reset the look",
 
@@ -340,6 +364,8 @@ const en: Dict = {
   "book.name": "Full name",
   "book.email": "Email",
   "book.phone": "Phone",
+  "book.zone": "Service area",
+  "book.zonePlaceholder": "Choose a service area",
   "book.notes": "Note (optional)",
   "book.back": "Back",
   "book.next": "Continue",
@@ -405,9 +431,11 @@ const en: Dict = {
   "ig.follow": "Follow on Instagram",
 
   "footer.tag":
-    "Your nails, but elevated. A cosy studio in Montréal and L'Assomption, for careful sets that hold.",
+    "Your nails, but elevated. A cosy studio serving Montréal, Laval and the Rive-Nord, for careful sets that hold.",
   "footer.navTitle": "Navigate",
   "footer.joinTitle": "Connect",
+  "footer.partnerTitle": "Official partner",
+  "footer.areasTitle": "Service areas",
   "footer.statement": "The small details make all the difference.",
 
   "nav.cart": "Cart",

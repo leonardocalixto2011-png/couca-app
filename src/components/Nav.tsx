@@ -139,7 +139,7 @@ export function Nav() {
           {t("nav.bookRdv")}
         </Link>
         <p className="mt-auto pt-8 text-sm text-ink-faint">
-          Montréal / L&rsquo;Assomption
+          Montréal · Laval · L&rsquo;Assomption · Repentigny · Joliette
         </p>
       </div>
     </>

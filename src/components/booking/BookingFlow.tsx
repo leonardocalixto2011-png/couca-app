@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { Icon } from "@/components/Icon";
 import { cn, formatMoneyFromCents } from "@/lib/utils";
+import { BRAND } from "@/lib/brand";
 import { DEPOSIT_CENTS, BOOKING_HORIZON_DAYS, STUDIO_TZ } from "@/lib/policy";
 import { fetchSlots, submitBooking, type SlotsResult } from "@/app/reserver/actions";
 import type { BookableService, Slot } from "@/lib/booking";
@@ -32,6 +33,7 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill }: Props) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [zone, setZone] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -80,11 +82,15 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill }: Props) {
   }
 
   const emailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
-  const detailsValid = name.trim().length > 1 && emailValid;
+  const detailsValid = name.trim().length > 1 && emailValid && zone !== "";
 
   function confirm() {
     if (!svc || !slot) return;
     setError(null);
+    const composedNotes =
+      [zone ? `${t("book.zone")} : ${zone}` : null, notes.trim() || null]
+        .filter(Boolean)
+        .join("\n") || undefined;
     startTransition(async () => {
       const res = await submitBooking({
         serviceSlug,
@@ -93,7 +99,7 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill }: Props) {
         contactName: name,
         contactEmail: email,
         contactPhone: phone || undefined,
-        notes: notes || undefined,
+        notes: composedNotes,
         locale,
       });
       if (!res.ok) {
@@ -290,6 +296,27 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill }: Props) {
           <Field label={t("book.email")} value={email} onChange={setEmail} type="email" autoComplete="email" required />
           <Field label={t("book.phone")} value={phone} onChange={setPhone} type="tel" autoComplete="tel" />
           <label className="flex flex-col gap-1.5">
+            <span className="font-ui text-[0.8rem] font-semibold text-ink-soft">
+              {t("book.zone")}
+              <span className="text-terracotta"> *</span>
+            </span>
+            <select
+              value={zone}
+              onChange={(e) => setZone(e.target.value)}
+              required
+              className="rounded-[var(--radius-lg)] border border-line bg-white px-3.5 py-2.5 text-[0.95rem] focus-visible:border-gold-muted"
+            >
+              <option value="" disabled>
+                {t("book.zonePlaceholder")}
+              </option>
+              {BRAND.serviceAreas.map((z) => (
+                <option key={z} value={z}>
+                  {z}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5">
             <span className="font-ui text-[0.8rem] font-semibold text-ink-soft">{t("book.notes")}</span>
             <textarea
               value={notes}
@@ -317,6 +344,7 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill }: Props) {
               <Row k={t("book.addToLook")} v={chosenAddons.map(name_).join(", ")} />
             )}
             <Row k={t("book.step.date")} v={whenLabel} />
+            {zone && <Row k={t("book.zone")} v={zone} />}
             <Row k={t("book.duration")} v={`${durationMin} min`} />
             <Row k={t("book.estTotal")} v={formatMoneyFromCents(estTotalCents, locale)} />
             <Row k={t("book.depositDue")} v={formatMoneyFromCents(DEPOSIT_CENTS, locale)} strong />
