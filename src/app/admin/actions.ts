@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/admin";
 import { signOut } from "@/auth";
 import { STUDIO_TZ } from "@/lib/policy";
 import { creditBookingVisit, uncreditBookingVisit } from "@/lib/loyalty";
+import { syncServiceCatalogue, type SyncResult } from "@/lib/catalogue";
 import type { BookingStatus } from "@prisma/client";
 
 const STATUSES: BookingStatus[] = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"];
@@ -44,6 +45,20 @@ export async function updateService(
     },
   });
   revalidatePath("/admin/services");
+}
+
+/**
+ * Bring the database in line with the service menu defined in code — adds new
+ * services, refreshes names, deactivates removed ones. Lets the owner apply a
+ * menu change from the admin panel instead of running the seed from a terminal.
+ */
+export async function syncServiceMenu(): Promise<SyncResult> {
+  await requireAdmin();
+  const result = await syncServiceCatalogue(prisma);
+  revalidatePath("/admin/services");
+  revalidatePath("/reserver");
+  revalidatePath("/");
+  return result;
 }
 
 export async function updateHours(

@@ -6,28 +6,9 @@
  */
 import { PrismaClient, ServiceCategory } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { SERVICE_CATALOGUE as SERVICES, syncServiceCatalogue } from "../src/lib/catalogue";
 
 const prisma = new PrismaClient();
-
-const SERVICES = [
-  // --- Base services (category GEL_SET = "pose de base" in the booking engine) ---
-  { slug: "acrylique-court", category: ServiceCategory.GEL_SET, nameFr: "Acrylique — court", nameEn: "Acrylic — short", priceCents: 4500, durationMin: 45 },
-  { slug: "acrylique-moyen", category: ServiceCategory.GEL_SET, nameFr: "Acrylique — moyen", nameEn: "Acrylic — medium", priceCents: 5000, durationMin: 60 },
-  { slug: "acrylique-long", category: ServiceCategory.GEL_SET, nameFr: "Acrylique — long", nameEn: "Acrylic — long", priceCents: 5500, durationMin: 75 },
-  { slug: "gelx-court", category: ServiceCategory.GEL_SET, nameFr: "Gel-X — court", nameEn: "Gel-X — short", priceCents: 4500, durationMin: 45 },
-  { slug: "gelx-moyen", category: ServiceCategory.GEL_SET, nameFr: "Gel-X — moyen", nameEn: "Gel-X — medium", priceCents: 5000, durationMin: 60 },
-  { slug: "gelx-long", category: ServiceCategory.GEL_SET, nameFr: "Gel-X — long", nameEn: "Gel-X — long", priceCents: 5500, durationMin: 75 },
-  { slug: "builder-gel", category: ServiceCategory.GEL_SET, nameFr: "Builder Gel / Bio Gel", nameEn: "Builder Gel / Bio Gel", priceCents: 4500, durationMin: 60 },
-  { slug: "manucure-russe", category: ServiceCategory.GEL_SET, nameFr: "Manucure russe", nameEn: "Russian manicure", priceCents: 4000, durationMin: 45 },
-  { slug: "service-homme", category: ServiceCategory.GEL_SET, nameFr: "Service Homme", nameEn: "Men's service", priceCents: 3500, durationMin: 30 },
-  { slug: "remplissage", category: ServiceCategory.GEL_SET, nameFr: "Remplissage", nameEn: "Fill / Refill", priceCents: 4000, durationMin: 45 },
-  // --- Extras (add-ons; +15 min each; art3d priced at the mid 10–20 $ tier) ---
-  { slug: "french-finish", category: ServiceCategory.ADDON, nameFr: "French", nameEn: "French", priceCents: 500, durationMin: 15 },
-  { slug: "chrome", category: ServiceCategory.ADDON, nameFr: "Chrome", nameEn: "Chrome", priceCents: 500, durationMin: 15 },
-  { slug: "nail-art-simple", category: ServiceCategory.ADDON, nameFr: "Nail art simple", nameEn: "Simple nail art", priceCents: 500, durationMin: 15 },
-  { slug: "nail-art-3d", category: ServiceCategory.ADDON, nameFr: "Nail art complexe / 3D", nameEn: "Complex / 3D nail art", priceCents: 1500, durationMin: 15 },
-  { slug: "strass-charms", category: ServiceCategory.ADDON, nameFr: "Strass / charms", nameEn: "Rhinestones / charms", priceCents: 500, durationMin: 15 },
-] as const;
 
 // Real Couca Club tiers.
 const LOYALTY = [
@@ -89,20 +70,12 @@ const PRODUCTS = [
 ];
 
 async function main() {
-  for (let i = 0; i < SERVICES.length; i++) {
-    const s = SERVICES[i];
-    await prisma.service.upsert({
-      where: { slug: s.slug },
-      update: { ...s, sortOrder: i, active: true },
-      create: { ...s, sortOrder: i },
-    });
-  }
-  // Retire any service that is no longer in the menu (e.g. the old "pose-gel-*").
-  const keepSlugs = SERVICES.map((s) => s.slug);
-  await prisma.service.updateMany({
-    where: { slug: { notIn: keepSlugs } },
-    data: { active: false },
-  });
+  // Same routine the admin "Synchroniser le menu" button runs. Prices and
+  // durations on existing services are left alone so owner edits survive.
+  const sync = await syncServiceCatalogue(prisma);
+  console.log(
+    `Services synced: ${sync.added} added, ${sync.updated} refreshed, ${sync.retired} retired.`,
+  );
 
   for (let i = 0; i < PRODUCTS.length; i++) {
     const p = PRODUCTS[i];
