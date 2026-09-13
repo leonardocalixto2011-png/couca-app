@@ -19,6 +19,8 @@ const SERVICES = [
   { slug: "gelx-long", category: ServiceCategory.GEL_SET, nameFr: "Gel-X — long", nameEn: "Gel-X — long", priceCents: 5500, durationMin: 75 },
   { slug: "builder-gel", category: ServiceCategory.GEL_SET, nameFr: "Builder Gel / Bio Gel", nameEn: "Builder Gel / Bio Gel", priceCents: 4500, durationMin: 60 },
   { slug: "manucure-russe", category: ServiceCategory.GEL_SET, nameFr: "Manucure russe", nameEn: "Russian manicure", priceCents: 4000, durationMin: 45 },
+  { slug: "service-homme", category: ServiceCategory.GEL_SET, nameFr: "Service Homme", nameEn: "Men's service", priceCents: 3500, durationMin: 30 },
+  { slug: "remplissage", category: ServiceCategory.GEL_SET, nameFr: "Remplissage", nameEn: "Fill / Refill", priceCents: 4000, durationMin: 45 },
   // --- Extras (add-ons; +15 min each; art3d priced at the mid 10–20 $ tier) ---
   { slug: "french-finish", category: ServiceCategory.ADDON, nameFr: "French", nameEn: "French", priceCents: 500, durationMin: 15 },
   { slug: "chrome", category: ServiceCategory.ADDON, nameFr: "Chrome", nameEn: "Chrome", priceCents: 500, durationMin: 15 },

@@ -18,6 +18,8 @@ export function Pricing() {
     { name: `${t("menu.gelx")} — ${t("menu.len.long")}`, amt: "55 $" },
     { name: t("menu.builder"), amt: "45 $+" },
     { name: t("menu.russe"), amt: "40 $" },
+    { name: t("svc.homme.t"), amt: "35 $" },
+    { name: t("svc.remplissage.t"), amt: "40 $" },
   ];
 
   return (

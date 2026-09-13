@@ -29,6 +29,8 @@ export const PRICING = {
     { slug: "gelx-long", key: "gelxLong", price: 55 },
     { slug: "builder-gel", key: "builderGel", price: 45 },
     { slug: "manucure-russe", key: "manucureRusse", price: 40 },
+    { slug: "service-homme", key: "serviceHomme", price: 35 },
+    { slug: "remplissage", key: "remplissage", price: 40 },
   ],
   addons: {
     french: 5,

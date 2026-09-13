@@ -10,6 +10,8 @@ const SERVICES = [
   { key: "gelx", icon: "nail" as const },
   { key: "builder", icon: "brush" as const },
   { key: "russe", icon: "spark" as const },
+  { key: "homme", icon: "gem" as const },
+  { key: "remplissage", icon: "nail" as const },
 ];
 
 export function Services() {
@@ -27,7 +29,7 @@ export function Services() {
           </p>
         </Reveal>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {SERVICES.map((s) => (
             <Reveal
               as="article"
