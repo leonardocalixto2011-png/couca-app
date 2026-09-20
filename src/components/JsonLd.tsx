@@ -21,6 +21,8 @@ export function nailSalonLd(rating?: { value: number; count: number } | null) {
       "Nail studio boutique desservant Montréal, Laval, L'Assomption, Repentigny et Joliette — acrylique, Gel-X, Builder Gel, manucure russe, nail art.",
     url: base,
     email: BRAND.email,
+    logo: `${base}/logo.png`,
+    image: [`${base}/logo.png`, `${base}/img/web-4.jpg`],
     // Studio address is intentionally omitted (owner does not want it on Google Maps).
     areaServed: [...BRAND.serviceAreas],
     sameAs: [BRAND.instagramProfile],
