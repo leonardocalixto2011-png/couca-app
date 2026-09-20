@@ -44,6 +44,32 @@ export async function listBookings(filter: { status?: string } = {}) {
   });
 }
 
+export async function adminListCustomers(q?: string) {
+  const query = q?.trim();
+  return prisma.customer.findMany({
+    where: query
+      ? {
+          OR: [
+            { name: { contains: query, mode: "insensitive" } },
+            { email: { contains: query, mode: "insensitive" } },
+            { phone: { contains: query } },
+          ],
+        }
+      : {},
+    orderBy: { updatedAt: "desc" },
+    take: 200,
+    include: {
+      _count: { select: { bookings: true } },
+      bookings: {
+        where: { status: "COMPLETED" },
+        orderBy: { startAt: "desc" },
+        take: 1,
+        select: { startAt: true },
+      },
+    },
+  });
+}
+
 export async function adminListProducts() {
   return prisma.product.findMany({ orderBy: { sortOrder: "asc" } });
 }

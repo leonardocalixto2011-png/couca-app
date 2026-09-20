@@ -8,6 +8,7 @@ import { signOut } from "@/auth";
 import { STUDIO_TZ } from "@/lib/policy";
 import { creditBookingVisit, uncreditBookingVisit } from "@/lib/loyalty";
 import { syncServiceCatalogue, type SyncResult } from "@/lib/catalogue";
+import { LOYALTY_TIERS } from "@/lib/brand";
 import type { BookingStatus } from "@prisma/client";
 
 const STATUSES: BookingStatus[] = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED", "NO_SHOW"];
@@ -94,6 +95,33 @@ export async function deleteTimeOff(id: string) {
   await prisma.timeOff.delete({ where: { id } });
   revalidatePath("/admin/time-off");
   revalidatePath("/admin");
+}
+
+/**
+ * Manual Couca Club adjustment — for visits that happened outside the booking
+ * flow (walk-in, booked under another email, registered after the visit…).
+ * Marking a booking COMPLETED is still the preferred path; this is the escape hatch.
+ */
+export async function adjustLoyaltyVisits(customerId: string, delta: 1 | -1) {
+  await requireAdmin();
+  await prisma.$transaction(async (tx) => {
+    const c = await tx.customer.findUnique({ where: { id: customerId }, select: { loyaltyVisits: true } });
+    if (!c) throw new Error("NOT_FOUND");
+    const next = Math.max(0, c.loyaltyVisits + delta);
+    if (next === c.loyaltyVisits) return;
+    await tx.customer.update({ where: { id: customerId }, data: { loyaltyVisits: next } });
+    if (delta > 0) {
+      for (const tier of LOYALTY_TIERS) {
+        if (next === tier.visit) {
+          await tx.loyaltyEvent.create({
+            data: { customerId, visitNumber: tier.visit, rewardKey: tier.rewardKey },
+          });
+        }
+      }
+    }
+  });
+  revalidatePath("/admin/customers");
+  revalidatePath("/compte");
 }
 
 export async function adminSignOut() {

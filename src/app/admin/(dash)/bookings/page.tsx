@@ -69,6 +69,16 @@ export default async function AdminBookings({
                       {b.contactPhone ? ` · ${b.contactPhone}` : ""}
                     </span>
                     {b.notes && <span className="block text-[0.78rem] italic text-ink-faint">“{b.notes}”</span>}
+                    {Array.isArray(b.inspoImages) && (b.inspoImages as string[]).length > 0 && (
+                      <span className="mt-1.5 flex gap-1.5">
+                        {(b.inspoImages as string[]).map((u) => (
+                          <a key={u} href={u} target="_blank" rel="noopener" className="block h-12 w-12 overflow-hidden rounded-[8px] border border-line">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={u} alt="Inspo" className="h-full w-full object-cover" />
+                          </a>
+                        ))}
+                      </span>
+                    )}
                   </td>
                   <td className="py-2.5 pr-3">{b.service.nameFr}</td>
                   <td className="py-2.5 pr-3 font-mono text-[0.72rem] text-ink-faint">{b.reference.slice(-8)}</td>

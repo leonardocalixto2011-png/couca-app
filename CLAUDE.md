@@ -203,3 +203,28 @@ hits `EPERM` renaming the locked query-engine DLL.
 
 `npm run dev` · `npm run build` · `npm run typecheck` · `npm run db:generate`
 · `npm run db:push` / `db:migrate` · `npm run db:seed` · `npm run db:studio`
+
+## 2026-09-20 — booking experience + admin + growth batch
+
+- **Studio address** (`BRAND.studioAddress`, 209 rue Paré, L'Assomption J5W 0K5) is shown ONLY on the post-booking
+  confirmation page and in emails. Never put it in the footer, JSON-LD, OG image or any indexed page — owner does
+  not want it on Google Maps.
+- **Secteur selector removed** from booking; footer "Secteurs desservis" block removed. `BRAND.serviceAreas` still
+  feeds JSON-LD `areaServed` (SEO reach only).
+- **Emails** (`src/lib/email.ts`): HTML confirmation + day-before reminder with `.ics` attachment and directions link;
+  owner notifications for new bookings (with inspo photos) and boutique orders → `OWNER_NOTIFY_EMAIL`
+  (fallback `ADMIN_EMAIL`). `loadBookingForEmail()` in `booking.ts` builds the payload (resolves addon names).
+- **Inspo photos**: `Booking.inspoImages` (Json string[]). Client downsizes to 1400px JPEG, `uploadInspoPhoto`
+  server action → Vercel Blob. Field only renders when `BLOB_READ_WRITE_TOKEN` is set (`src/lib/inspo.ts`).
+  Thumbnails in /admin/bookings and in the owner email. `serverActions.bodySizeLimit` = 8mb.
+- **Reminders**: `Booking.reminderSentAt`; `/api/cron/reminders` (Bearer `CRON_SECRET`), `vercel.json` cron daily
+  14:00 UTC, window 20–48 h ahead.
+- **Admin › Clientes** (`/admin/customers`): search, booking count, last visit, Couca Club ± (`adjustLoyaltyVisits`,
+  creates LoyaltyEvent on tier crossing). Marking a booking COMPLETED is still the normal path.
+- **Google reviews**: `src/lib/reviews.ts` (Places API New, 1h cache) → `TestimonialsSection` (server) →
+  `Testimonials` (client). Needs `GOOGLE_PLACE_ID` + `GOOGLE_MAPS_API_KEY`; falls back to the honest placeholder.
+  Adds `aggregateRating` to NailSalon JSON-LD when present.
+- **Analytics** (`src/components/Analytics.tsx`): gtag loader gated on `NEXT_PUBLIC_GA_MEASUREMENT_ID` /
+  `NEXT_PUBLIC_GOOGLE_ADS_ID`; `TrackBookingConversion` on the confirmation page, `TrackOrderConversion` on
+  /boutique/merci. Labels: `NEXT_PUBLIC_GOOGLE_ADS_BOOKING_LABEL`, `…_ORDER_LABEL`.
+- Migration `20260920120000_inspo_photos_and_reminders` (two additive columns) applies via `vercel-build`.

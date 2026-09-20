@@ -13,6 +13,8 @@ import {
   STUDIO_TZ,
 } from "./policy";
 import type { BookingStatus } from "@prisma/client";
+import type { Locale } from "@/i18n/messages";
+import type { BookingEmailData } from "./email";
 
 const ACTIVE_STATUSES: BookingStatus[] = ["PENDING", "CONFIRMED"];
 
@@ -149,6 +151,7 @@ export type CreateBookingInput = {
   contactEmail: string;
   contactPhone?: string;
   notes?: string;
+  inspoImages?: string[];
   locale: "fr" | "en";
 };
 
@@ -226,6 +229,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreatedB
         contactEmail: email,
         contactPhone: input.contactPhone?.trim() || null,
         notes: input.notes?.trim() || null,
+        inspoImages: (input.inspoImages ?? []).filter((u) => /^https:\/\//.test(u)).slice(0, 3),
         locale: input.locale,
         estimatedTotalCents: priceCents,
         depositCents: DEPOSIT_CENTS,
@@ -260,4 +264,34 @@ export async function markDepositPaid(bookingId: string) {
     data: { depositPaid: true, status: "CONFIRMED" },
     include: { service: true },
   });
+}
+
+/** Everything the confirmation / reminder / owner emails need, addon slugs resolved to names. */
+export async function loadBookingForEmail(bookingId: string): Promise<BookingEmailData | null> {
+  const b = await prisma.booking.findUnique({ where: { id: bookingId }, include: { service: true } });
+  if (!b) return null;
+  const slugs = Array.isArray(b.addonSlugs) ? (b.addonSlugs as string[]) : [];
+  const addons = slugs.length
+    ? await prisma.service.findMany({ where: { slug: { in: slugs } }, select: { slug: true, nameFr: true, nameEn: true } })
+    : [];
+  const bySlug = new Map(addons.map((a) => [a.slug, a]));
+  const locale: Locale = b.locale === "en" ? "en" : "fr";
+  const pick = (s: { nameFr: string; nameEn: string }) => (locale === "fr" ? s.nameFr : s.nameEn);
+  return {
+    reference: b.reference,
+    locale,
+    contactName: b.contactName,
+    contactEmail: b.contactEmail,
+    contactPhone: b.contactPhone,
+    serviceName: pick(b.service),
+    addonNames: slugs.map((s) => bySlug.get(s)).filter((a): a is NonNullable<typeof a> => Boolean(a)).map(pick),
+    startAt: b.startAt,
+    endAt: b.endAt,
+    durationMin: Math.round((b.endAt.getTime() - b.startAt.getTime()) / 60000),
+    estimatedTotalCents: b.estimatedTotalCents,
+    depositCents: b.depositCents,
+    depositPaid: b.depositPaid,
+    notes: b.notes,
+    inspoImages: Array.isArray(b.inspoImages) ? (b.inspoImages as string[]) : [],
+  };
 }

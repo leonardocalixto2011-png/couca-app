@@ -4,11 +4,12 @@ import { headers } from "next/headers";
 import {
   createBooking,
   getDayAvailability,
+  loadBookingForEmail,
   type CreateBookingInput,
   type Slot,
 } from "@/lib/booking";
 import { getStripe } from "@/lib/stripe";
-import { sendBookingConfirmation } from "@/lib/email";
+import { sendBookingConfirmation, sendOwnerBookingNotice } from "@/lib/email";
 import { DEPOSIT_CENTS } from "@/lib/policy";
 
 export type SlotsResult =
@@ -91,15 +92,9 @@ export async function submitBooking(input: CreateBookingInput): Promise<SubmitRe
   }
 
   // No Stripe (or it failed): confirm the request; deposit is collected in studio.
-  await sendBookingConfirmation({
-    to: input.contactEmail,
-    reference: booking.reference,
-    locale: input.locale,
-    serviceName: input.locale === "fr" ? booking.serviceName.fr : booking.serviceName.en,
-    addonNames: booking.addonNames.map((a) => (input.locale === "fr" ? a.fr : a.en)),
-    startAt: booking.startAt,
-    estimatedTotalCents: booking.estimatedTotalCents,
-    depositCents: booking.depositCents,
-  });
+  const data = await loadBookingForEmail(booking.id);
+  if (data) {
+    await Promise.all([sendBookingConfirmation(data), sendOwnerBookingNotice(data)]);
+  }
   return { ok: true, mode: "confirmed", reference: booking.reference };
 }

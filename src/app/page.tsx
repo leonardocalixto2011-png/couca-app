@@ -4,7 +4,7 @@ import { PromoBanner } from "@/components/sections/PromoBanner";
 import { Pricing } from "@/components/sections/Pricing";
 import { CoucaClub } from "@/components/sections/CoucaClub";
 import { Gallery } from "@/components/sections/Gallery";
-import { Testimonials } from "@/components/sections/Testimonials";
+import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 import { InstagramBridge } from "@/components/sections/InstagramBridge";
 
 export default function HomePage() {
@@ -16,7 +16,7 @@ export default function HomePage() {
       <Pricing />
       <CoucaClub />
       <Gallery />
-      <Testimonials />
+      <TestimonialsSection />
       <InstagramBridge />
     </>
   );

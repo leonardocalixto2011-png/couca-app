@@ -9,6 +9,8 @@ import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { StickyBookBar } from "@/components/StickyBookBar";
 import { JsonLd, nailSalonLd } from "@/components/JsonLd";
+import { Analytics } from "@/components/Analytics";
+import { getGoogleReviews } from "@/lib/reviews";
 import { BRAND } from "@/lib/brand";
 
 const cormorant = Cormorant_Garamond({
@@ -52,6 +54,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const cookieStore = await cookies();
   const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value);
+  const reviews = await getGoogleReviews(locale);
 
   return (
     <html
@@ -59,7 +62,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${cormorant.variable} ${inter.variable} ${vibes.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <JsonLd data={nailSalonLd()} />
+        <JsonLd data={nailSalonLd(reviews ? { value: reviews.rating, count: reviews.count } : null)} />
+        <Analytics />
         <LocaleProvider initialLocale={locale}>
           <CartProvider>
           <a

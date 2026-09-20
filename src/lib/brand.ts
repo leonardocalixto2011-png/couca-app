@@ -3,9 +3,24 @@ export const BRAND = {
   name: "Couca & Co. Beauty",
   shortName: "Couca & Co.",
   studioType: "Nail Studio",
-  /** Service areas / zones served — no separate storefronts. */
+  /** Cities clients come from — used for SEO reach (JSON-LD areaServed) only. */
   serviceAreas: ["Montréal", "Laval", "L'Assomption", "Repentigny", "Joliette"] as const,
-  areaServed: "Montréal · Laval · L'Assomption · Repentigny · Joliette",
+  /** Short public location line (nav drawer, Instagram bridge). */
+  areaServed: "L'Assomption · Rive-Nord de Montréal",
+  /**
+   * Studio address. Deliberately NOT rendered on any public page, in JSON-LD,
+   * or in the OG image — the owner does not want it indexed by Google Maps.
+   * It is shared only with clients who have a confirmed booking (confirmation
+   * page + emails).
+   */
+  studioAddress: {
+    street: "209 rue Paré",
+    city: "L'Assomption",
+    province: "QC",
+    postal: "J5W 0K5",
+    line: "209 rue Paré, L'Assomption (Québec) J5W 0K5",
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&destination=209+rue+Par%C3%A9%2C+L%27Assomption%2C+QC+J5W+0K5",
+  },
   instagramHandle: "@coucaandcobeauty",
   instagramProfile: "https://www.instagram.com/coucaandcobeauty/",
   instagramDM: "https://ig.me/m/coucaandcobeauty",

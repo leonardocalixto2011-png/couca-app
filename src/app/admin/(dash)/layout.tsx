@@ -10,6 +10,7 @@ export const metadata: Metadata = { title: "Admin", robots: { index: false } };
 const NAV = [
   { href: "/admin", label: "Tableau de bord" },
   { href: "/admin/bookings", label: "Réservations" },
+  { href: "/admin/customers", label: "Clientes" },
   { href: "/admin/orders", label: "Commandes" },
   { href: "/admin/products", label: "Boutique" },
   { href: "/admin/hours", label: "Horaires" },

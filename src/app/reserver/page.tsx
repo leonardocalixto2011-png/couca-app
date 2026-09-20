@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { listCatalogue, openWeekdays, getBookingByReference } from "@/lib/booking";
 import { BookingFlow } from "@/components/booking/BookingFlow";
 import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
+import { inspoUploadEnabled } from "@/lib/inspo";
 
 export const metadata: Metadata = { title: "Réservation" };
 
@@ -74,6 +75,7 @@ export default async function ReserverPage({
             serviceSlug: prefillService,
             addonSlugs: prefillAddons,
           }}
+          inspoEnabled={inspoUploadEnabled()}
         />
       </div>
     </section>

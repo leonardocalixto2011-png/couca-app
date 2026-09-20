@@ -107,6 +107,8 @@ model Booking {
   contactEmail          String
   contactPhone          String?
   notes                 String?
+  // Reference photos the client attached at booking — string[] of Vercel Blob URLs
+  inspoImages           Json          @default("[]")
   locale                String        @default("fr")
 
   estimatedTotalCents   Int?
@@ -117,6 +119,8 @@ model Booking {
   cancelledAt           DateTime?
   loyaltyCounted        Boolean       @default(false)
   stripePaymentIntentId String?
+  // Set by the daily reminder cron once the day-before email has gone out
+  reminderSentAt        DateTime?
 
   customerId            String?
   customer              Customer?     @relation(fields: [customerId], references: [id])

@@ -5,6 +5,8 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { Icon } from "@/components/Icon";
 import { cn, formatMoneyFromCents } from "@/lib/utils";
 import { STUDIO_TZ } from "@/lib/policy";
+import { BRAND } from "@/lib/brand";
+import { TrackBookingConversion } from "@/components/Analytics";
 
 export function BookingConfirmation(props: {
   reference: string;
@@ -28,9 +30,11 @@ export function BookingConfirmation(props: {
       }).format(new Date(props.startIso))
     : null;
   const serviceName = locale === "fr" ? props.serviceNameFr : props.serviceNameEn;
+  const addr = BRAND.studioAddress;
 
   return (
     <div className="mx-auto max-w-[560px] text-center">
+      {props.found && <TrackBookingConversion reference={props.reference} valueCents={props.depositCents} />}
       <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-blush text-terracotta">
         <Icon name="check" className="h-6 w-6" />
       </span>
@@ -58,6 +62,29 @@ export function BookingConfirmation(props: {
         />
       </dl>
 
+      {props.found && (
+        <div className="mx-auto mt-4 max-w-[420px] rounded-[var(--radius-xl)] border border-[var(--line-gold)] bg-white p-5 text-left">
+          <p className="font-ui text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-ink-soft">
+            {t("book.whereTitle")}
+          </p>
+          <p className="mt-2 text-[0.98rem] leading-snug text-ink">
+            {addr.street}
+            <br />
+            {addr.city} ({addr.province}) {addr.postal}
+          </p>
+          <a
+            href={addr.mapsUrl}
+            target="_blank"
+            rel="noopener"
+            className="btn btn--sm mt-3"
+          >
+            {t("book.directions")}
+            <Icon name="arrow" />
+          </a>
+          <p className="mt-3 text-[0.78rem] text-ink-faint">{t("book.whereNote")}</p>
+        </div>
+      )}
+
       {!props.found && (
         <p className="mt-4 text-sm text-ink-faint">
           {locale === "fr"
@@ -66,7 +93,8 @@ export function BookingConfirmation(props: {
         </p>
       )}
 
-      <p className="mx-auto mt-5 max-w-[42ch] text-[0.86rem] text-ink-faint">{t("policy.cancel")}</p>
+      {props.found && <p className="mt-4 text-[0.82rem] text-ink-faint">📅 {t("book.calendarHint")}</p>}
+      <p className="mx-auto mt-4 max-w-[42ch] text-[0.86rem] text-ink-faint">{t("policy.cancel")}</p>
 
       <Link href="/" className="btn btn--ghost mt-7">
         {t("nav.home")}

@@ -64,13 +64,6 @@ export function Footer() {
 
           <div>
             <h4 className="mb-3 font-ui text-[0.72rem] uppercase tracking-[0.2em] text-gold-muted">
-              {t("footer.areasTitle")}
-            </h4>
-            <p className="text-[0.94rem] text-blush-light">{BRAND.serviceAreas.join(" · ")}</p>
-          </div>
-
-          <div>
-            <h4 className="mb-3 font-ui text-[0.72rem] uppercase tracking-[0.2em] text-gold-muted">
               {t("footer.partnerTitle")}
             </h4>
             <a

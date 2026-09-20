@@ -11,7 +11,7 @@ export function JsonLd({ data }: { data: Record<string, unknown> }) {
   );
 }
 
-export function nailSalonLd() {
+export function nailSalonLd(rating?: { value: number; count: number } | null) {
   const base = process.env.NEXT_PUBLIC_SITE_URL || BRAND.domain;
   return {
     "@context": "https://schema.org",
@@ -21,8 +21,20 @@ export function nailSalonLd() {
       "Nail studio boutique desservant Montréal, Laval, L'Assomption, Repentigny et Joliette — acrylique, Gel-X, Builder Gel, manucure russe, nail art.",
     url: base,
     email: BRAND.email,
+    // Studio address is intentionally omitted (owner does not want it on Google Maps).
     areaServed: [...BRAND.serviceAreas],
     sameAs: [BRAND.instagramProfile],
+    ...(rating && rating.count > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: rating.value.toFixed(1),
+            reviewCount: rating.count,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
     openingHoursSpecification: [
       {
         "@type": "OpeningHoursSpecification",
