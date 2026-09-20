@@ -21,7 +21,13 @@ function Stars({ n, className }: { n: number; className?: string }) {
   );
 }
 
-export function Testimonials({ google }: { google: GoogleReviewsData | null }) {
+export function Testimonials({
+  google,
+  reviewUrl,
+}: {
+  google: GoogleReviewsData | null;
+  reviewUrl: string | null;
+}) {
   const { t, locale } = useLocale();
   const live = google && google.reviews.length > 0;
 
@@ -47,8 +53,8 @@ export function Testimonials({ google }: { google: GoogleReviewsData | null }) {
             <p className="max-w-[52ch] text-[clamp(1.12rem,1.02rem+0.5vw,1.32rem)] text-ink-soft md:text-right">
               {live ? t("voices.google.p") : t("voices.p")}
             </p>
-            {google && (
-              <a href={google.writeReviewUrl} target="_blank" rel="noopener" className="btn btn--ghost btn--sm">
+            {reviewUrl && (
+              <a href={reviewUrl} target="_blank" rel="noopener" className="btn btn--ghost btn--sm">
                 <Icon name="spark" />
                 {t("voices.leaveReview")}
               </a>

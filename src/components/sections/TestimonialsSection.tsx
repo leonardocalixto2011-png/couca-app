@@ -7,5 +7,8 @@ import { Testimonials } from "./Testimonials";
 export async function TestimonialsSection() {
   const locale = normalizeLocale((await cookies()).get(LOCALE_COOKIE)?.value);
   const google = await getGoogleReviews(locale);
-  return <Testimonials google={google} />;
+  // The Business Profile's own "ask for a review" link works without the
+  // Places API, so the CTA can go live before a Maps key exists.
+  const reviewUrl = google?.writeReviewUrl ?? process.env.GOOGLE_REVIEW_URL ?? null;
+  return <Testimonials google={google} reviewUrl={reviewUrl} />;
 }
