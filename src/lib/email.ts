@@ -7,7 +7,7 @@
  * the post-booking confirmation page, never on public pages.
  */
 import type { Locale } from "@/i18n/messages";
-import { BRAND } from "./brand";
+import { BRAND, CMAC_BEAUTY, cmacUtm } from "./brand";
 import { formatMoneyFromCents } from "./utils";
 import { STUDIO_TZ } from "./policy";
 
@@ -113,6 +113,7 @@ const COPY = {
     questions: "Une question ? Répondez à ce courriel ou écrivez-nous sur Instagram.",
     seeYou: "À très vite,",
     signature: "L'équipe Couca & Co. Beauty",
+    partner: "Entre deux rendez-vous, prolongez l'effet à la maison avec notre partenaire CMAC Beauty — 10 % avec le code COUCA10",
     icsSummary: (svc: string) => `Couca & Co. Beauty — ${svc}`,
   },
   en: {
@@ -147,6 +148,7 @@ const COPY = {
     questions: "Questions? Reply to this email or message us on Instagram.",
     seeYou: "See you soon,",
     signature: "The Couca & Co. Beauty team",
+    partner: "Between appointments, keep the glow going at home with our partner CMAC Beauty — 10% off with code COUCA10",
     icsSummary: (svc: string) => `Couca & Co. Beauty — ${svc}`,
   },
 } as const;
@@ -267,6 +269,11 @@ function renderClientEmail(kind: "confirmation" | "reminder", d: BookingEmailDat
   ].join("");
 
   const addr = BRAND.studioAddress;
+  const partnerUrl = cmacUtm(CMAC_BEAUTY.home, "email", "booking-confirmation");
+  const partnerHtml =
+    kind === "confirmation"
+      ? `<p style="margin:0 6px 14px;font-size:12px;color:${C.faint};line-height:1.5;">${esc(c.partner)} → <a href="${esc(partnerUrl)}" style="color:${C.terracotta};text-decoration:none;">cmacbeauty.ca</a></p>`
+      : "";
   const html = `<!doctype html>
 <html lang="${d.locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(subject)}</title></head>
 <body style="margin:0;padding:0;background:${C.cream};">
@@ -302,6 +309,7 @@ function renderClientEmail(kind: "confirmation" | "reminder", d: BookingEmailDat
     </table>
     <p style="margin:0 6px 4px;font-size:14px;color:${C.soft};line-height:1.55;">${esc(c.questions)}</p>
     <p style="margin:0 6px 26px;font-size:14px;color:${C.soft};line-height:1.55;">${esc(c.seeYou)}<br><span style="color:${C.ink};">${esc(c.signature)}</span></p>
+    ${partnerHtml}
     <p style="margin:0 6px;font-size:12px;color:${C.faint};">
       <a href="${BRAND.instagramProfile}" style="color:${C.terracotta};text-decoration:none;">Instagram ${esc(BRAND.instagramHandle)}</a>
       &nbsp;·&nbsp; <a href="${BRAND.domain}" style="color:${C.terracotta};text-decoration:none;">coucabeauty.ca</a>
@@ -335,6 +343,8 @@ function renderClientEmail(kind: "confirmation" | "reminder", d: BookingEmailDat
     c.seeYou,
     c.signature,
     `${BRAND.instagramHandle} · ${BRAND.domain}`,
+    kind === "confirmation" ? "" : null,
+    kind === "confirmation" ? `${c.partner} → ${partnerUrl}` : null,
   ]
     .filter((l) => l != null)
     .join("\n");

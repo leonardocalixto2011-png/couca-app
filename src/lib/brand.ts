@@ -26,8 +26,40 @@ export const BRAND = {
   instagramDM: "https://ig.me/m/coucaandcobeauty",
   email: "coucabeautyco@outlook.com",
   domain: "https://coucabeauty.ca",
-  partner: { name: "CMAC Services", url: "https://cmacservices.ca/" },
+  /** Footer partners. `descKey` is an optional i18n key for a short descriptor. */
+  partners: [
+    { name: "CMAC Services", url: "https://cmacservices.ca/", descKey: null },
+    {
+      name: "CMAC Beauty",
+      url: "https://cmacbeauty.ca/?utm_source=coucabeauty&utm_medium=referral&utm_campaign=partner",
+      descKey: "footer.partner.cmacBeauty",
+    },
+  ],
 } as const;
+
+/**
+ * CMAC Beauty — partner store (separate business, separate Stripe account).
+ * Its products are NEVER added to Couca's cart/checkout; we only link out.
+ */
+export const CMAC_BEAUTY = {
+  name: "CMAC Beauty",
+  home: "https://cmacbeauty.ca/",
+  feed: "https://cmacbeauty.ca/feeds/google.xml",
+  code: "COUCA10",
+} as const;
+
+/** Appends Couca's UTM params to a cmacbeauty.ca URL. */
+export function cmacUtm(url: string, medium = "referral", campaign = "partner"): string {
+  try {
+    const u = new URL(url);
+    u.searchParams.set("utm_source", "coucabeauty");
+    u.searchParams.set("utm_medium", medium);
+    u.searchParams.set("utm_campaign", campaign);
+    return u.toString();
+  } catch {
+    return CMAC_BEAUTY.home;
+  }
+}
 
 /**
  * Real service menu (dollars). Source of truth for the calculator; the seed

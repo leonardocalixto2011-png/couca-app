@@ -228,3 +228,11 @@ hits `EPERM` renaming the locked query-engine DLL.
   `NEXT_PUBLIC_GOOGLE_ADS_ID`; `TrackBookingConversion` on the confirmation page, `TrackOrderConversion` on
   /boutique/merci. Labels: `NEXT_PUBLIC_GOOGLE_ADS_BOOKING_LABEL`, `…_ORDER_LABEL`.
 - Migration `20260920120000_inspo_photos_and_reminders` (two additive columns) applies via `vercel-build`.
+
+## 2026-09-21 — CMAC Beauty cross-promo (partner, link-out only)
+
+- `BRAND.partners` (footer list: CMAC Services + CMAC Beauty w/ UTM). `CMAC_BEAUTY` + `cmacUtm()` in `brand.ts`.
+- `/boutique` → `CmacPartner` section fed LIVE by `src/lib/cmac.ts` (`getCmacPicks`, CMAC Google feed, 1h revalidate,
+  never throws → falls back to intro + COUCA10 + shop button). Plain `<img>` for cjdropshipping images.
+- CMAC products are NEVER in Couca's cart/Stripe — external links only ("Vendu et expédié par CMAC Beauty").
+- Client **confirmation** email (not the reminder) has one small partner line, `utm_medium=email`.

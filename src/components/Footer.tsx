@@ -64,16 +64,20 @@ export function Footer() {
 
           <div>
             <h4 className="mb-3 font-ui text-[0.72rem] uppercase tracking-[0.2em] text-gold-muted">
-              {t("footer.partnerTitle")}
+              {t("footer.partnersTitle")}
             </h4>
-            <a
-              href={BRAND.partner.url}
-              target="_blank"
-              rel="noopener"
-              className="text-[0.94rem] text-blush-light hover:text-cream"
-            >
-              {BRAND.partner.name}
-            </a>
+            <ul className="flex flex-col gap-2.5 text-[0.94rem]">
+              {BRAND.partners.map((p) => (
+                <li key={p.url}>
+                  <a href={p.url} target="_blank" rel="noopener" className="text-blush-light hover:text-cream">
+                    {p.name}
+                  </a>
+                  {p.descKey && (
+                    <span className="block text-[0.8rem] text-ink-faint">{t(p.descKey)}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
