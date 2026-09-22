@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { listCatalogue, openWeekdays, getBookingByReference } from "@/lib/booking";
 import { BookingFlow } from "@/components/booking/BookingFlow";
 import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
+import { DepositPending } from "@/components/booking/DepositPending";
 import { inspoUploadEnabled } from "@/lib/inspo";
+import { isAwaitingDeposit } from "@/lib/deposit";
 
 export const metadata: Metadata = { title: "Réservation" };
 
@@ -24,6 +26,28 @@ export default async function ReserverPage({
 }) {
   const sp = await searchParams;
   const confirmedRef = first(sp.confirmed);
+  const pendingRef = first(sp.cancelled) ?? first(sp.expired);
+
+  // Back from Stripe without paying, or an old deposit link.
+  if (pendingRef && !confirmedRef) {
+    const b = await getBookingByReference(pendingRef);
+    if (b && !b.depositPaid) {
+      const stillOpen = isAwaitingDeposit(b);
+      return (
+        <section className="section-pad">
+          <div className="container-x">
+            <DepositPending
+              reference={b.reference}
+              expired={!stillOpen}
+              serviceNameFr={b.service.nameFr}
+              serviceNameEn={b.service.nameEn}
+              startIso={b.startAt.toISOString()}
+            />
+          </div>
+        </section>
+      );
+    }
+  }
 
   if (confirmedRef) {
     const booking = await getBookingByReference(confirmedRef);

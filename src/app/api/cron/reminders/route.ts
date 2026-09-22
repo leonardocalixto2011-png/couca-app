@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { loadBookingForEmail } from "@/lib/booking";
 import { sendBookingFollowUp, sendBookingReminder } from "@/lib/email";
+import { remindUnpaidDeposit } from "@/lib/deposit-reminder";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,9 @@ export const dynamic = "force-dynamic";
  * 1. Day-before reminders. Runs once a day (see vercel.json). Picks every active
  * booking starting 20–48 h from now that hasn't been reminded yet, so each
  * appointment gets exactly one reminder roughly a day ahead.
- * 2. Day-after follow-up (thank you + Google review + book the next visit) for
+ * 2. Deposit rescue: bookings still waiting on their deposit get one
+ * "your spot is waiting" email (safety net for the Stripe expiry webhook).
+ * 3. Day-after follow-up (thank you + Google review + book the next visit) for
  * appointments that ended 2–40 h ago. The short look-back window means a deploy
  * never mass-emails old clients.
  */
@@ -41,6 +44,19 @@ export async function GET(req: NextRequest) {
     sent++;
   }
 
+  const unpaid = await prisma.booking.findMany({
+    where: {
+      status: "PENDING",
+      depositPaid: false,
+      depositReminderSentAt: null,
+      createdAt: { lt: new Date(now - 45 * 60e3) },
+      startAt: { gt: new Date(now + 2 * 3600e3) },
+    },
+    select: { id: true },
+  });
+  let depositReminders = 0;
+  for (const { id } of unpaid) if (await remindUnpaidDeposit(id, "cron")) depositReminders++;
+
   const doneWindow = await prisma.booking.findMany({
     where: {
       status: { in: ["CONFIRMED", "COMPLETED"] },
@@ -59,5 +75,5 @@ export async function GET(req: NextRequest) {
     followUps++;
   }
 
-  return NextResponse.json({ checked: due.length, sent, followUpsChecked: doneWindow.length, followUps });
+  return NextResponse.json({ checked: due.length, sent, depositReminders, followUpsChecked: doneWindow.length, followUps });
 }

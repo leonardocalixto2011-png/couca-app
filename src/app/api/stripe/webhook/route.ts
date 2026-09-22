@@ -4,6 +4,7 @@ import { getStripe } from "@/lib/stripe";
 import { getBookingByReference, loadBookingForEmail, markDepositPaid } from "@/lib/booking";
 import { getOrderByReference, markOrderPaid } from "@/lib/shop";
 import { prisma } from "@/lib/prisma";
+import { remindUnpaidDeposit } from "@/lib/deposit-reminder";
 import { sendBookingConfirmation, sendOwnerBookingNotice, sendOwnerOrderNotice } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
@@ -63,6 +64,15 @@ export async function POST(req: NextRequest) {
           await Promise.all([sendBookingConfirmation(data), sendOwnerBookingNotice(data)]);
         }
       }
+    }
+  }
+
+  // Abandoned deposit checkout (sessions expire after 1 h, see src/lib/deposit.ts):
+  // send the "your spot is waiting" email while the booking is still fresh.
+  if (event.type === "checkout.session.expired") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    if (session.metadata?.kind === "booking" && session.metadata.bookingId) {
+      await remindUnpaidDeposit(session.metadata.bookingId, "stripe-expired");
     }
   }
 

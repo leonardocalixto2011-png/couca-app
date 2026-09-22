@@ -123,6 +123,8 @@ model Booking {
   reminderSentAt        DateTime?
   // Set by the daily cron once the day-after thank-you / review / rebook email has gone out
   followUpSentAt        DateTime?
+  // Set once the "your spot is waiting, pay your deposit" email has gone out
+  depositReminderSentAt DateTime?
 
   customerId            String?
   customer              Customer?     @relation(fields: [customerId], references: [id])

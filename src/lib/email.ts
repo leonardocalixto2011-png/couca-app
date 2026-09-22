@@ -420,6 +420,142 @@ export async function sendBookingReminder(d: BookingEmailData): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Deposit reminder: booking picked but the $20 deposit was never paid
+// ---------------------------------------------------------------------------
+
+const DEPOSIT = {
+  fr: {
+    subject: (when: string) => `Votre place du ${when} vous attend ✨`,
+    eyebrow: "Plus qu'une étape",
+    title: "Votre place vous attend",
+    lead: "Vous avez choisi votre moment chez Couca & Co. Beauty, mais le dépôt n'a pas été complété. Votre rendez-vous n'est donc pas encore confirmé.",
+    stepsTitle: "Confirmer en 1 minute",
+    steps: [
+      "Touchez le bouton ci-dessous.",
+      "Réglez le dépôt de 20 $ en toute sécurité avec Stripe.",
+      "Recevez aussitôt votre confirmation, l'adresse du studio et le fichier calendrier.",
+    ],
+    cta: "Confirmer ma place · 20 $",
+    applied: "Le dépôt est déduit de votre total en studio : vous ne payez rien de plus.",
+    hold: "Les places non confirmées peuvent être offertes à une autre cliente. Confirmez dès que possible pour garder la vôtre.",
+    change: "Ce moment ne vous convient plus ? Répondez simplement à ce courriel et on trouve un autre créneau ensemble.",
+    secure: "Paiement sécurisé par Stripe · Visa, Mastercard, Apple Pay, Google Pay",
+  },
+  en: {
+    subject: (when: string) => `Your spot on ${when} is waiting ✨`,
+    eyebrow: "One step left",
+    title: "Your spot is waiting",
+    lead: "You picked your time at Couca & Co. Beauty, but the deposit wasn't completed, so your appointment isn't confirmed yet.",
+    stepsTitle: "Confirm in 1 minute",
+    steps: [
+      "Tap the button below.",
+      "Pay the $20 deposit securely with Stripe.",
+      "Get your confirmation, the studio address and a calendar file right away.",
+    ],
+    cta: "Confirm my spot · $20",
+    applied: "The deposit comes off your in-studio total, so you pay nothing extra.",
+    hold: "Unconfirmed spots may be offered to another client. Confirm soon to keep yours.",
+    change: "Time doesn't work anymore? Just reply to this email and we'll find another slot together.",
+    secure: "Secure payment by Stripe · Visa, Mastercard, Apple Pay, Google Pay",
+  },
+} as const;
+
+export async function sendDepositReminder(d: BookingEmailData, payUrl: string): Promise<void> {
+  const k = DEPOSIT[d.locale];
+  const c = COPY[d.locale];
+  const when = fmtWhen(d.startAt, d.locale);
+  const shortWhen = fmtWhen(d.startAt, d.locale, { weekday: "long", day: "numeric", month: "long", hour: undefined, minute: undefined });
+  const subject = k.subject(shortWhen);
+
+  const detailRows = [
+    row(c.service, esc(d.serviceName)),
+    d.addonNames.length ? row(c.extras, esc(d.addonNames.join(", "))) : "",
+    row(c.when, `<strong>${esc(when)}</strong>`),
+    row(c.duration, `${d.durationMin} ${c.minutes}`),
+    d.estimatedTotalCents != null ? row(c.estTotal, formatMoneyFromCents(d.estimatedTotalCents, d.locale)) : "",
+  ].join("");
+
+  const steps = k.steps
+    .map(
+      (s, i) => `<tr>
+        <td style="width:30px;padding:6px 0;vertical-align:top;"><span style="display:inline-block;width:22px;height:22px;line-height:22px;border-radius:999px;background:${C.blush};color:${C.terracotta};font-size:12px;font-weight:700;text-align:center;">${i + 1}</span></td>
+        <td style="padding:6px 0;font-size:14px;color:${C.ink};line-height:1.5;">${esc(s)}</td>
+      </tr>`,
+    )
+    .join("");
+
+  const html = `<!doctype html>
+<html lang="${d.locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(subject)}</title></head>
+<body style="margin:0;padding:0;background:${C.cream};">
+<div style="display:none;max-height:0;overflow:hidden;">${esc(k.lead)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.cream};">
+<tr><td align="center" style="padding:28px 14px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;font-family:Georgia,'Times New Roman',serif;color:${C.ink};">
+  <tr><td style="padding:0 6px 18px;">
+    <span style="font-size:22px;font-weight:600;">Couca &amp; Co.</span>
+    <span style="display:block;font-size:10px;letter-spacing:0.34em;text-transform:uppercase;color:${C.gold};font-family:Arial,Helvetica,sans-serif;">Nail Studio</span>
+  </td></tr>
+  <tr><td style="padding:0 6px 4px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:${C.terracotta};font-weight:700;">${esc(k.eyebrow)}</td></tr>
+  <tr><td style="padding:0 6px 6px;"><h1 style="margin:0;font-size:32px;font-weight:500;line-height:1.12;">${esc(k.title)}</h1></td></tr>
+  <tr><td style="padding:0 6px 22px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:${C.soft};">
+    <p style="margin:0 0 6px;">${esc(c.hello(d.contactName))}</p>
+    <p style="margin:0;">${esc(k.lead)}</p>
+  </td></tr>
+  <tr><td style="font-family:Arial,Helvetica,sans-serif;">
+    ${card(c.detailsTitle, `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${detailRows}</table>`)}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;border:1px solid ${C.gold};border-radius:16px;background:#fdf9f3;">
+      <tr><td style="padding:20px 20px 22px;">
+        <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:${C.soft};font-weight:600;">${esc(k.stepsTitle)}</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">${steps}</table>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+          <a href="${esc(payUrl)}" style="display:block;padding:15px 22px;border-radius:999px;background:${C.terracotta};color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;text-align:center;">${esc(k.cta)} →</a>
+        </td></tr></table>
+        <p style="margin:12px 0 0;font-size:12px;color:${C.faint};text-align:center;">🔒 ${esc(k.secure)}</p>
+        <p style="margin:12px 0 0;font-size:13px;color:${C.soft};line-height:1.5;text-align:center;">${esc(k.applied)}</p>
+      </td></tr>
+    </table>
+    <p style="margin:0 6px 10px;font-size:13px;color:${C.soft};line-height:1.55;">${esc(k.hold)}</p>
+    <p style="margin:0 6px 18px;font-size:13px;color:${C.soft};line-height:1.55;">${esc(k.change)}</p>
+    <p style="margin:0 6px 26px;font-size:14px;color:${C.soft};line-height:1.55;">${esc(c.seeYou)}<br><span style="color:${C.ink};">${esc(c.signature)}</span></p>
+    <p style="margin:0 6px;font-size:12px;color:${C.faint};">
+      <a href="${BRAND.instagramProfile}" style="color:${C.terracotta};text-decoration:none;">Instagram ${esc(BRAND.instagramHandle)}</a>
+      &nbsp;·&nbsp; <a href="${BRAND.domain}" style="color:${C.terracotta};text-decoration:none;">coucabeauty.ca</a>
+    </p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+
+  const text = [
+    k.title,
+    "",
+    c.hello(d.contactName),
+    k.lead,
+    "",
+    `${c.service}: ${d.serviceName}${d.addonNames.length ? ` + ${d.addonNames.join(", ")}` : ""}`,
+    `${c.when}: ${when}`,
+    "",
+    `${k.cta}: ${payUrl}`,
+    k.applied,
+    "",
+    k.hold,
+    k.change,
+    "",
+    c.seeYou,
+    c.signature,
+  ].join("\n");
+
+  await sendEmail({
+    to: d.contactEmail,
+    bcc: ownerNotifyAddresses().filter((a) => a.toLowerCase() !== d.contactEmail.toLowerCase()),
+    subject,
+    html,
+    text,
+    replyTo: BRAND.email,
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Day-after follow-up: thank you + Google review + book the next visit
 // ---------------------------------------------------------------------------
 
@@ -548,7 +684,8 @@ export async function sendOwnerBookingNotice(d: BookingEmailData): Promise<void>
   const to = ownerNotifyAddresses();
   const when = fmtWhen(d.startAt, "fr");
   const shortWhen = new Intl.DateTimeFormat("fr-CA", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: STUDIO_TZ }).format(d.startAt);
-  const subject = `Nouvelle réservation · ${d.contactName} · ${shortWhen}`;
+  const pendingDeposit = !d.depositPaid;
+  const subject = `${pendingDeposit ? "Dépôt en attente" : "Nouvelle réservation"} · ${d.contactName} · ${shortWhen}`;
   const money = (n: number) => formatMoneyFromCents(n, "fr");
 
   const photos = d.inspoImages.length
@@ -593,7 +730,7 @@ export async function sendOwnerBookingNotice(d: BookingEmailData): Promise<void>
     .join("\n");
 
   await Promise.all([
-    sendEmail({ to, subject, html: ownerFrame("Nouvelle réservation", inner), text, replyTo: d.contactEmail }),
+    sendEmail({ to, subject, html: ownerFrame(pendingDeposit ? "Réservation en attente de dépôt" : "Nouvelle réservation", inner), text, replyTo: d.contactEmail }),
     sendOwnerSms(`RDV Couca: ${d.contactName}, ${shortWhen}, ${d.serviceName}${d.contactPhone ? `, ${d.contactPhone}` : ""}. Dépôt ${d.depositPaid ? "payé" : "non payé"}.`),
   ]);
 }

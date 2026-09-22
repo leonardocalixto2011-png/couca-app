@@ -10,7 +10,7 @@ import {
 } from "@/lib/booking";
 import { getStripe } from "@/lib/stripe";
 import { sendBookingConfirmation, sendOwnerBookingNotice } from "@/lib/email";
-import { DEPOSIT_CENTS } from "@/lib/policy";
+import { createDepositCheckout } from "@/lib/deposit";
 
 export type SlotsResult =
   | { ok: true; slots: Slot[]; durationMin: number; closed: boolean }
@@ -50,41 +50,13 @@ export async function submitBooking(input: CreateBookingInput): Promise<SubmitRe
     return { ok: false, error: err instanceof Error ? err.message : "UNKNOWN" };
   }
 
-  const stripe = getStripe();
-  if (stripe) {
+  if (getStripe()) {
     try {
-      const origin = await siteOrigin();
-      const session = await stripe.checkout.sessions.create({
-        mode: "payment",
-        customer_email: input.contactEmail,
-        line_items: [
-          {
-            quantity: 1,
-            price_data: {
-              currency: "cad",
-              unit_amount: DEPOSIT_CENTS,
-              product_data: {
-                name:
-                  input.locale === "fr"
-                    ? "Dépôt de réservation — Couca & Co. Beauty"
-                    : "Booking deposit — Couca & Co. Beauty",
-                description:
-                  input.locale === "fr"
-                    ? "Non remboursable · appliqué au montant final en studio"
-                    : "Non-refundable · applied to your final in-studio total",
-              },
-            },
-          },
-        ],
-        metadata: { kind: "booking", bookingId: booking.id, reference: booking.reference },
-        payment_intent_data: {
-          description: `Couca & Co. Beauty — dépôt RDV #${booking.reference.slice(-8)}`,
-          metadata: { kind: "booking", reference: booking.reference },
-        },
-        success_url: `${origin}/reserver?confirmed=${booking.reference}`,
-        cancel_url: `${origin}/reserver?cancelled=${booking.reference}`,
-      });
-      if (session.url) return { ok: true, mode: "checkout", url: session.url };
+      const url = await createDepositCheckout(
+        { id: booking.id, reference: booking.reference, contactEmail: input.contactEmail, locale: input.locale ?? "fr" },
+        await siteOrigin(),
+      );
+      if (url) return { ok: true, mode: "checkout", url };
     } catch (err) {
       console.error("[stripe] checkout session failed", err);
       // fall through to confirmed-without-payment
