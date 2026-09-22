@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { loadBookingForEmail } from "@/lib/booking";
-import { sendBookingReminder } from "@/lib/email";
+import { sendBookingFollowUp, sendBookingReminder } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Day-before reminders. Runs once a day (see vercel.json). Picks every active
+ * Daily client emails (see vercel.json — Hobby allows one run a day, so both
+ * jobs share this route).
+ *
+ * 1. Day-before reminders. Runs once a day (see vercel.json). Picks every active
  * booking starting 20–48 h from now that hasn't been reminded yet, so each
  * appointment gets exactly one reminder roughly a day ahead.
+ * 2. Day-after follow-up (thank you + Google review + book the next visit) for
+ * appointments that ended 2–40 h ago. The short look-back window means a deploy
+ * never mass-emails old clients.
  */
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -35,5 +41,23 @@ export async function GET(req: NextRequest) {
     sent++;
   }
 
-  return NextResponse.json({ checked: due.length, sent });
+  const doneWindow = await prisma.booking.findMany({
+    where: {
+      status: { in: ["CONFIRMED", "COMPLETED"] },
+      followUpSentAt: null,
+      endAt: { gte: new Date(now - 40 * 3600e3), lt: new Date(now - 2 * 3600e3) },
+    },
+    select: { id: true, service: { select: { slug: true } } },
+  });
+
+  let followUps = 0;
+  for (const b of doneWindow) {
+    const data = await loadBookingForEmail(b.id);
+    if (!data) continue;
+    await sendBookingFollowUp(data, b.service.slug);
+    await prisma.booking.update({ where: { id: b.id }, data: { followUpSentAt: new Date() } });
+    followUps++;
+  }
+
+  return NextResponse.json({ checked: due.length, sent, followUpsChecked: doneWindow.length, followUps });
 }

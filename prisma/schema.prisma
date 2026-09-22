@@ -121,6 +121,8 @@ model Booking {
   stripePaymentIntentId String?
   // Set by the daily reminder cron once the day-before email has gone out
   reminderSentAt        DateTime?
+  // Set by the daily cron once the day-after thank-you / review / rebook email has gone out
+  followUpSentAt        DateTime?
 
   customerId            String?
   customer              Customer?     @relation(fields: [customerId], references: [id])

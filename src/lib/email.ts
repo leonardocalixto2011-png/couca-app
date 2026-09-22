@@ -398,6 +398,117 @@ export async function sendBookingReminder(d: BookingEmailData): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Day-after follow-up: thank you + Google review + book the next visit
+// ---------------------------------------------------------------------------
+
+const FOLLOW = {
+  fr: {
+    subject: "Merci pour votre visite 💅🏾",
+    title: "Merci d'être venue !",
+    lead: "J'espère que vous adorez vos ongles. Votre avis compte énormément pour un petit studio comme le nôtre.",
+    reviewTitle: "30 secondes pour nous aider",
+    reviewText: "Un avis Google aide d'autres clientes à nous trouver. Une photo de vos ongles dans l'avis, c'est encore mieux !",
+    reviewCta: "Laisser un avis Google",
+    rebookTitle: "Votre prochain rendez-vous",
+    rebookFill: "Pour des ongles impeccables, un remplissage est idéal après 2 à 3 semaines. Les places partent vite : réservez dès maintenant.",
+    rebookOther: "Réservez votre prochaine visite en quelques clics, le créneau de votre choix vous attend.",
+    rebookCta: "Réserver mon prochain rendez-vous",
+    club: "Chaque visite compte dans votre Couca Club : les récompenses arrivent vite.",
+    issue: "Un souci avec votre pose ? Répondez simplement à ce courriel, on s'en occupe.",
+  },
+  en: {
+    subject: "Thank you for your visit 💅🏾",
+    title: "Thanks for coming in!",
+    lead: "I hope you love your nails. Your feedback means a lot to a small studio like ours.",
+    reviewTitle: "30 seconds to help us",
+    reviewText: "A Google review helps other clients find us. A photo of your nails in the review is even better!",
+    reviewCta: "Leave a Google review",
+    rebookTitle: "Your next appointment",
+    rebookFill: "For flawless nails, a fill is ideal after 2 to 3 weeks. Spots go fast, so book now.",
+    rebookOther: "Book your next visit in a few taps. Your favourite time slot is waiting.",
+    rebookCta: "Book my next appointment",
+    club: "Every visit counts toward your Couca Club rewards.",
+    issue: "Any issue with your set? Just reply to this email and we'll take care of it.",
+  },
+} as const;
+
+/** Sets that grow out and need a fill; everything else rebooks the same service. */
+const FILL_SERVICES = /^(acrylique|gelx|builder-gel|remplissage)/;
+
+export function rebookSlugFor(serviceSlug: string): string {
+  return FILL_SERVICES.test(serviceSlug) ? "remplissage" : serviceSlug;
+}
+
+export async function sendBookingFollowUp(d: BookingEmailData, serviceSlug: string): Promise<void> {
+  const f = FOLLOW[d.locale];
+  const reviewUrl = process.env.GOOGLE_REVIEW_URL || null;
+  const rebookSlug = rebookSlugFor(serviceSlug);
+  const rebookUrl = `${BRAND.domain}/reserver?service=${encodeURIComponent(rebookSlug)}&utm_source=email&utm_medium=followup&utm_campaign=rebook`;
+  const rebookText = rebookSlug === "remplissage" ? f.rebookFill : f.rebookOther;
+  const btn = (href: string, label: string, bg: string) =>
+    `<a href="${esc(href)}" style="display:inline-block;padding:12px 20px;border-radius:999px;background:${bg};color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;">${esc(label)} →</a>`;
+
+  const reviewCard = reviewUrl
+    ? card(
+        f.reviewTitle,
+        `<p style="margin:0 0 6px;font-size:22px;letter-spacing:0.1em;color:${C.gold};">★★★★★</p>
+         <p style="margin:0 0 12px;font-size:14px;color:${C.ink};line-height:1.55;">${esc(f.reviewText)}</p>
+         ${btn(reviewUrl, f.reviewCta, C.terracotta)}`,
+        true,
+      )
+    : "";
+
+  const html = `<!doctype html>
+<html lang="${d.locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(f.subject)}</title></head>
+<body style="margin:0;padding:0;background:${C.cream};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.cream};">
+<tr><td align="center" style="padding:28px 14px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;font-family:Georgia,'Times New Roman',serif;color:${C.ink};">
+  <tr><td style="padding:0 6px 18px;">
+    <span style="font-size:22px;font-weight:600;">Couca &amp; Co.</span>
+    <span style="display:block;font-size:10px;letter-spacing:0.34em;text-transform:uppercase;color:${C.gold};font-family:Arial,Helvetica,sans-serif;">Nail Studio</span>
+  </td></tr>
+  <tr><td style="padding:0 6px 6px;"><h1 style="margin:0;font-size:30px;font-weight:500;line-height:1.15;">${esc(f.title)}</h1></td></tr>
+  <tr><td style="padding:0 6px 22px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:${C.soft};">
+    <p style="margin:0 0 6px;">${esc(COPY[d.locale].hello(d.contactName))}</p>
+    <p style="margin:0;">${esc(f.lead)}</p>
+  </td></tr>
+  <tr><td style="font-family:Arial,Helvetica,sans-serif;">
+    ${reviewCard}
+    ${card(f.rebookTitle, `<p style="margin:0 0 12px;font-size:14px;color:${C.ink};line-height:1.55;">${esc(rebookText)}</p>${btn(rebookUrl, f.rebookCta, C.ink)}<p style="margin:12px 0 0;font-size:12px;color:${C.faint};">${esc(f.club)}</p>`)}
+    <p style="margin:0 6px 4px;font-size:14px;color:${C.soft};line-height:1.55;">${esc(f.issue)}</p>
+    <p style="margin:0 6px 26px;font-size:14px;color:${C.soft};line-height:1.55;">${esc(COPY[d.locale].seeYou)}<br><span style="color:${C.ink};">${esc(COPY[d.locale].signature)}</span></p>
+    <p style="margin:0 6px;font-size:12px;color:${C.faint};">
+      <a href="${BRAND.instagramProfile}" style="color:${C.terracotta};text-decoration:none;">Instagram ${esc(BRAND.instagramHandle)}</a>
+      &nbsp;·&nbsp; <a href="${BRAND.domain}" style="color:${C.terracotta};text-decoration:none;">coucabeauty.ca</a>
+    </p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+
+  const text = [
+    f.title,
+    "",
+    COPY[d.locale].hello(d.contactName),
+    f.lead,
+    "",
+    reviewUrl ? `${f.reviewText}\n${f.reviewCta}: ${reviewUrl}` : null,
+    "",
+    rebookText,
+    `${f.rebookCta}: ${rebookUrl}`,
+    "",
+    f.issue,
+    COPY[d.locale].seeYou,
+    COPY[d.locale].signature,
+  ]
+    .filter((l) => l != null)
+    .join("\n");
+
+  await sendEmail({ to: d.contactEmail, subject: f.subject, html, text, replyTo: BRAND.email });
+}
+
+// ---------------------------------------------------------------------------
 // Owner notifications
 // ---------------------------------------------------------------------------
 
