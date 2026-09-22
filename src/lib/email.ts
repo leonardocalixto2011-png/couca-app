@@ -27,12 +27,14 @@ type SendInput = {
   attachments?: Attachment[];
 };
 
-export async function sendEmail(input: SendInput): Promise<void> {
+export type SendResult = { ok: boolean; status: number; id?: string; error?: string; to: string | string[] };
+
+export async function sendEmail(input: SendInput): Promise<SendResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM || `${BRAND.name} <onboarding@resend.dev>`;
   if (!apiKey) {
     console.info(`[email:dev] to=${input.to} subject="${input.subject}"\n${input.text}`);
-    return;
+    return { ok: true, status: 0, to: input.to };
   }
   try {
     const res = await fetch("https://api.resend.com/emails", {
@@ -49,9 +51,21 @@ export async function sendEmail(input: SendInput): Promise<void> {
         attachments: input.attachments,
       }),
     });
-    if (!res.ok) console.error(`[email] Resend responded ${res.status}: ${await res.text()}`);
+    const body = await res.text();
+    if (!res.ok) {
+      console.error(`[email] Resend responded ${res.status}: ${body}`);
+      return { ok: false, status: res.status, error: body.slice(0, 300), to: input.to };
+    }
+    let id: string | undefined;
+    try {
+      id = (JSON.parse(body) as { id?: string }).id;
+    } catch {
+      // Resend always returns JSON; the id is only used for diagnostics.
+    }
+    return { ok: true, status: res.status, id, to: input.to };
   } catch (err) {
     console.error("[email] send failed", err);
+    return { ok: false, status: 0, error: String(err), to: input.to };
   }
 }
 
@@ -81,13 +95,34 @@ export function ownerSmsAddresses(): string[] {
   return splitList(process.env.OWNER_SMS_EMAIL);
 }
 
+export type ClientSendOptions = { studioOnly?: boolean };
+
 /**
  * Every email to a client goes through here so the studio inbox always gets a
- * copy (BCC, so the client never sees the studio address in the recipients).
+ * copy. The copy is its own email ("[Copie → client] subject") rather than a
+ * BCC: it is easy to spot and filter in Outlook, and Resend reports its
+ * delivery separately. `studioOnly` sends just the copy.
  */
-async function sendClientEmail(input: Omit<SendInput, "bcc"> & { to: string }): Promise<void> {
+async function sendClientEmail(
+  input: Omit<SendInput, "bcc"> & { to: string },
+  opts: ClientSendOptions = {},
+): Promise<SendResult[]> {
   const client = input.to.toLowerCase();
-  await sendEmail({ ...input, bcc: ownerNotifyAddresses().filter((a) => a.toLowerCase() !== client) });
+  const studio = ownerNotifyAddresses().filter((a) => a.toLowerCase() !== client);
+  const sends: Promise<SendResult>[] = [];
+  if (!opts.studioOnly) sends.push(sendEmail(input));
+  if (studio.length) {
+    sends.push(
+      sendEmail({
+        ...input,
+        to: studio,
+        subject: `[Copie → ${input.to}] ${input.subject}`,
+        text: `Copie de l'email envoyé à ${input.to}\n\n${input.text}`,
+        replyTo: input.to,
+      }),
+    );
+  }
+  return Promise.all(sends);
 }
 
 async function sendOwnerSms(text: string): Promise<void> {
@@ -467,7 +502,11 @@ const DEPOSIT = {
   },
 } as const;
 
-export async function sendDepositReminder(d: BookingEmailData, payUrl: string): Promise<void> {
+export async function sendDepositReminder(
+  d: BookingEmailData,
+  payUrl: string,
+  opts: ClientSendOptions = {},
+): Promise<SendResult[]> {
   const k = DEPOSIT[d.locale];
   const c = COPY[d.locale];
   const when = fmtWhen(d.startAt, d.locale);
@@ -552,13 +591,16 @@ export async function sendDepositReminder(d: BookingEmailData, payUrl: string): 
     c.signature,
   ].join("\n");
 
-  await sendClientEmail({
-    to: d.contactEmail,
-    subject,
-    html,
-    text,
-    replyTo: BRAND.email,
-  });
+  return sendClientEmail(
+    {
+      to: d.contactEmail,
+      subject,
+      html,
+      text,
+      replyTo: BRAND.email,
+    },
+    opts,
+  );
 }
 
 // ---------------------------------------------------------------------------
