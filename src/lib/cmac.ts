@@ -19,12 +19,13 @@ export type CmacProduct = {
 
 /** Preferred products, in display order. */
 const PREFERRED = [
+  // Nails, hands & feet first: made for Couca clients, between appointments.
+  "set-between-appointments",
+  "gel-manicure-gloves",
+  "nail-care-pen",
+  "set-pedi-night",
+  "electric-foot-file",
   "facial-ice-roller",
-  "under-eye-glow-wand",
-  "led-red-light-mask",
-  "sonic-silicone-cleansing-brush",
-  "spa-headband",
-  "satin-sleep-mask",
 ];
 const MAX = 6;
 
