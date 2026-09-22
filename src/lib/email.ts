@@ -20,7 +20,7 @@ type Attachment = { filename: string; content: string }; // base64
 type SendInput = {
   to: string | string[];
   subject: string;
-  html: string;
+  html?: string;
   text: string;
   replyTo?: string;
   attachments?: Attachment[];
@@ -54,8 +54,36 @@ export async function sendEmail(input: SendInput): Promise<void> {
 }
 
 /** Where owner notifications go. Falls back to the admin login email. */
-export function ownerNotifyAddress(): string | null {
-  return process.env.OWNER_NOTIFY_EMAIL || process.env.ADMIN_EMAIL || null;
+function splitList(v: string | undefined): string[] {
+  return (v ?? "")
+    .split(/[,;s]+/)
+    .map((x) => x.trim())
+    .filter((x) => x.includes("@"));
+}
+
+/**
+ * Inboxes that get the full booking/order alert. Defaults to the studio's
+ * real inbox (BRAND.email). ADMIN_EMAIL is only a login id: admin@coucabeauty.ca
+ * has no Cloudflare forwarding rule, so mail sent there is dropped.
+ */
+export function ownerNotifyAddresses(): string[] {
+  const list = splitList(process.env.OWNER_NOTIFY_EMAIL);
+  return list.length ? list : [BRAND.email];
+}
+
+/**
+ * Optional carrier email-to-SMS gateways (e.g. 4385054220@txt.bell.ca) that get
+ * a short text-only alert, so the studio phone buzzes like an SMS.
+ */
+export function ownerSmsAddresses(): string[] {
+  return splitList(process.env.OWNER_SMS_EMAIL);
+}
+
+async function sendOwnerSms(text: string): Promise<void> {
+  const to = ownerSmsAddresses();
+  if (!to.length) return;
+  // Gateways truncate around 160 chars; keep it to one plain line.
+  await Promise.all(to.map((addr) => sendEmail({ to: addr, subject: "Couca", text: text.slice(0, 155) })));
 }
 
 // ---------------------------------------------------------------------------
@@ -384,8 +412,7 @@ function ownerFrame(title: string, inner: string): string {
 }
 
 export async function sendOwnerBookingNotice(d: BookingEmailData): Promise<void> {
-  const to = ownerNotifyAddress();
-  if (!to) return;
+  const to = ownerNotifyAddresses();
   const when = fmtWhen(d.startAt, "fr");
   const shortWhen = new Intl.DateTimeFormat("fr-CA", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: STUDIO_TZ }).format(d.startAt);
   const subject = `Nouvelle réservation · ${d.contactName} · ${shortWhen}`;
@@ -432,7 +459,10 @@ export async function sendOwnerBookingNotice(d: BookingEmailData): Promise<void>
     .filter((l) => l != null)
     .join("\n");
 
-  await sendEmail({ to, subject, html: ownerFrame("Nouvelle réservation", inner), text, replyTo: d.contactEmail });
+  await Promise.all([
+    sendEmail({ to, subject, html: ownerFrame("Nouvelle réservation", inner), text, replyTo: d.contactEmail }),
+    sendOwnerSms(`RDV Couca: ${d.contactName}, ${shortWhen}, ${d.serviceName}${d.contactPhone ? `, ${d.contactPhone}` : ""}. Dépôt ${d.depositPaid ? "payé" : "non payé"}.`),
+  ]);
 }
 
 export type OrderNoticeData = {
@@ -444,8 +474,7 @@ export type OrderNoticeData = {
 };
 
 export async function sendOwnerOrderNotice(o: OrderNoticeData): Promise<void> {
-  const to = ownerNotifyAddress();
-  if (!to) return;
+  const to = ownerNotifyAddresses();
   const money = (n: number) => formatMoneyFromCents(n, "fr");
   const subject = `Nouvelle commande boutique · ${money(o.subtotalCents)} · ${o.reference.slice(-8).toUpperCase()}`;
   const ship = o.shipping as { name?: string; phone?: string; address?: Record<string, string | null> } | null;
@@ -486,5 +515,8 @@ export async function sendOwnerOrderNotice(o: OrderNoticeData): Promise<void> {
     .filter((l) => l != null)
     .join("\n");
 
-  await sendEmail({ to, subject, html: ownerFrame("Nouvelle commande boutique", inner), text, replyTo: o.contactEmail });
+  await Promise.all([
+    sendEmail({ to, subject, html: ownerFrame("Nouvelle commande boutique", inner), text, replyTo: o.contactEmail }),
+    sendOwnerSms(`Commande Couca: ${money(o.subtotalCents)}, ${o.contactEmail}. Voir l'espace studio.`),
+  ]);
 }
