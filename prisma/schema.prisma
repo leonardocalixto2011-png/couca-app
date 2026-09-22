@@ -22,21 +22,21 @@ enum ServiceCategory {
 }
 
 model Service {
-  id             String          @id @default(cuid())
-  slug           String          @unique
-  category       ServiceCategory
-  nameFr         String
-  nameEn         String
-  descriptionFr  String?
-  descriptionEn  String?
-  priceCents     Int
+  id            String          @id @default(cuid())
+  slug          String          @unique
+  category      ServiceCategory
+  nameFr        String
+  nameEn        String
+  descriptionFr String?
+  descriptionEn String?
+  priceCents    Int
   // durationMin: PLACEHOLDER — awaiting owner confirmation of real service times.
-  durationMin    Int             @default(60)
-  active         Boolean         @default(true)
-  sortOrder      Int             @default(0)
-  bookings       Booking[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  durationMin   Int             @default(60)
+  active        Boolean         @default(true)
+  sortOrder     Int             @default(0)
+  bookings      Booking[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
 
 model Product {
@@ -50,7 +50,7 @@ model Product {
   images        Json     @default("[]") // string[] of image URLs
   // [{ nameFr, nameEn, values: [{ value, labelFr, labelEn }] }] — e.g. Krèm flavour
   options       Json     @default("[]")
-  stock         Int?     // null = not tracked
+  stock         Int? // null = not tracked
   active        Boolean  @default(true)
   sortOrder     Int      @default(0)
   createdAt     DateTime @default(now())
@@ -62,13 +62,13 @@ model Product {
 // ----------------------------------------------------------------------------
 
 model BusinessHours {
-  id        String  @id @default(cuid())
+  id       String  @id @default(cuid())
   // 0 = Sunday … 6 = Saturday
-  weekday   Int     @unique
-  isOpen    Boolean @default(true)
+  weekday  Int     @unique
+  isOpen   Boolean @default(true)
   // minutes from midnight. Confirmed hours: 7 days a week, 13:00–18:00.
-  openMin   Int     @default(780)  // 13:00
-  closeMin  Int     @default(1080) // 18:00
+  openMin  Int     @default(780) // 13:00
+  closeMin Int     @default(1080) // 18:00
 }
 
 model TimeOff {
@@ -92,32 +92,32 @@ enum BookingStatus {
 }
 
 model Booking {
-  id                    String        @id @default(cuid())
-  reference             String        @unique @default(cuid())
-  status                BookingStatus @default(PENDING)
+  id        String        @id @default(cuid())
+  reference String        @unique @default(cuid())
+  status    BookingStatus @default(PENDING)
 
-  serviceId             String
-  service               Service       @relation(fields: [serviceId], references: [id])
-  addonSlugs            Json          @default("[]")
+  serviceId  String
+  service    Service @relation(fields: [serviceId], references: [id])
+  addonSlugs Json    @default("[]")
 
-  startAt               DateTime
-  endAt                 DateTime
+  startAt DateTime
+  endAt   DateTime
 
-  contactName           String
-  contactEmail          String
-  contactPhone          String?
-  notes                 String?
+  contactName  String
+  contactEmail String
+  contactPhone String?
+  notes        String?
   // Reference photos the client attached at booking — string[] of Vercel Blob URLs
-  inspoImages           Json          @default("[]")
-  locale                String        @default("fr")
+  inspoImages  Json    @default("[]")
+  locale       String  @default("fr")
 
   estimatedTotalCents   Int?
   // $20 flat, non-refundable, applied to the final in-studio bill (see src/lib/policy.ts)
-  depositCents          Int           @default(2000)
-  depositPaid           Boolean       @default(false)
-  depositForfeited      Boolean       @default(false)
+  depositCents          Int       @default(2000)
+  depositPaid           Boolean   @default(false)
+  depositForfeited      Boolean   @default(false)
   cancelledAt           DateTime?
-  loyaltyCounted        Boolean       @default(false)
+  loyaltyCounted        Boolean   @default(false)
   stripePaymentIntentId String?
   // Set by the daily reminder cron once the day-before email has gone out
   reminderSentAt        DateTime?
@@ -125,12 +125,16 @@ model Booking {
   followUpSentAt        DateTime?
   // Set once the "your spot is waiting, pay your deposit" email has gone out
   depositReminderSentAt DateTime?
+  // Referral: code the new client used, the discount it gave, and when the referrer was credited
+  referralCode          String?
+  referralDiscountCents Int       @default(0)
+  referralRewardedAt    DateTime?
 
-  customerId            String?
-  customer              Customer?     @relation(fields: [customerId], references: [id])
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
 
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([startAt])
   @@index([status])
@@ -141,19 +145,22 @@ model Booking {
 // ----------------------------------------------------------------------------
 
 model Customer {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  name          String?
-  phone         String?
-  locale        String         @default("fr")
-  loyaltyVisits Int            @default(0)
-  userId        String?        @unique
-  user          User?          @relation(fields: [userId], references: [id])
-  bookings      Booking[]
-  loyaltyEvents LoyaltyEvent[]
-  orders        Order[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id                  String         @id @default(cuid())
+  email               String         @unique
+  name                String?
+  phone               String?
+  locale              String         @default("fr")
+  loyaltyVisits       Int            @default(0)
+  // Personal referral code (e.g. LISE7K) and earned credit, applied in studio
+  referralCode        String?        @unique
+  referralCreditCents Int            @default(0)
+  userId              String?        @unique
+  user                User?          @relation(fields: [userId], references: [id])
+  bookings            Booking[]
+  loyaltyEvents       LoyaltyEvent[]
+  orders              Order[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 }
 
 model LoyaltyEvent {

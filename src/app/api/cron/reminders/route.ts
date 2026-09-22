@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { loadBookingForEmail } from "@/lib/booking";
 import { sendBookingFollowUp, sendBookingReminder } from "@/lib/email";
 import { remindUnpaidDeposit } from "@/lib/deposit-reminder";
+import { ensureReferralCode, referralShareUrl } from "@/lib/referral";
 
 export const dynamic = "force-dynamic";
 
@@ -63,14 +64,15 @@ export async function GET(req: NextRequest) {
       followUpSentAt: null,
       endAt: { gte: new Date(now - 40 * 3600e3), lt: new Date(now - 2 * 3600e3) },
     },
-    select: { id: true, service: { select: { slug: true } } },
+    select: { id: true, customerId: true, service: { select: { slug: true } } },
   });
 
   let followUps = 0;
   for (const b of doneWindow) {
     const data = await loadBookingForEmail(b.id);
     if (!data) continue;
-    await sendBookingFollowUp(data, b.service.slug);
+    const code = b.customerId ? await ensureReferralCode(b.customerId) : null;
+    await sendBookingFollowUp(data, b.service.slug, code ? { code, url: referralShareUrl(code) } : null);
     await prisma.booking.update({ where: { id: b.id }, data: { followUpSentAt: new Date() } });
     followUps++;
   }

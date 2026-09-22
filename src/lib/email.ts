@@ -152,6 +152,11 @@ export type BookingEmailData = {
   depositPaid: boolean;
   notes: string | null;
   inspoImages: string[];
+  /** Friend's referral code used on this booking, and the discount it gave. */
+  referralCode?: string | null;
+  referralDiscountCents?: number;
+  /** Credit this client has earned by referring friends (owner info). */
+  referralCreditCents?: number;
 };
 
 const COPY = {
@@ -337,6 +342,12 @@ function renderClientEmail(kind: "confirmation" | "reminder", d: BookingEmailDat
   ].join("");
 
   const amountRows = [
+    d.referralDiscountCents
+      ? row(
+          d.locale === "fr" ? `Rabais parrainage (${d.referralCode ?? ""})` : `Referral discount (${d.referralCode ?? ""})`,
+          `−${money(d.referralDiscountCents)}`,
+        )
+      : "",
     d.estimatedTotalCents != null ? row(c.estTotal, money(d.estimatedTotalCents)) : "",
     row(c.deposit, `${money(d.depositCents)} <span style="color:${d.depositPaid ? C.rose : C.faint};font-size:12px;">${d.depositPaid ? c.depositPaid : c.depositPending}</span>`),
     balance != null ? row(c.balance, money(balance), true) : "",
@@ -621,6 +632,10 @@ const FOLLOW = {
     rebookCta: "Réserver mon prochain rendez-vous",
     club: "Chaque visite compte dans votre Couca Club : les récompenses arrivent vite.",
     issue: "Un souci avec votre pose ? Répondez simplement à ce courriel, on s'en occupe.",
+    referTitle: "Parrainez une amie",
+    referText: "Partagez votre code : votre amie a 10 $ de rabais sur sa première visite, et vous recevez 10 $ sur votre prochaine visite dès qu'elle est venue.",
+    referCode: "Votre code",
+    referCta: "Partager mon lien",
   },
   en: {
     subject: "Thank you for your visit 💅🏾",
@@ -635,6 +650,10 @@ const FOLLOW = {
     rebookCta: "Book my next appointment",
     club: "Every visit counts toward your Couca Club rewards.",
     issue: "Any issue with your set? Just reply to this email and we'll take care of it.",
+    referTitle: "Refer a friend",
+    referText: "Share your code: your friend gets $10 off her first visit, and you get $10 off your next visit once she's been in.",
+    referCode: "Your code",
+    referCta: "Share my link",
   },
 } as const;
 
@@ -645,7 +664,11 @@ export function rebookSlugFor(serviceSlug: string): string {
   return FILL_SERVICES.test(serviceSlug) ? "remplissage" : serviceSlug;
 }
 
-export async function sendBookingFollowUp(d: BookingEmailData, serviceSlug: string): Promise<void> {
+export async function sendBookingFollowUp(
+  d: BookingEmailData,
+  serviceSlug: string,
+  referral?: { code: string; url: string } | null,
+): Promise<void> {
   const f = FOLLOW[d.locale];
   const reviewUrl = process.env.GOOGLE_REVIEW_URL || null;
   const rebookSlug = rebookSlugFor(serviceSlug);
@@ -661,6 +684,16 @@ export async function sendBookingFollowUp(d: BookingEmailData, serviceSlug: stri
          <p style="margin:0 0 12px;font-size:14px;color:${C.ink};line-height:1.55;">${esc(f.reviewText)}</p>
          ${btn(reviewUrl, f.reviewCta, C.terracotta)}`,
         true,
+      )
+    : "";
+
+  const referCard = referral
+    ? card(
+        f.referTitle,
+        `<p style="margin:0 0 12px;font-size:14px;color:${C.ink};line-height:1.55;">${esc(f.referText)}</p>
+         <p style="margin:0 0 14px;font-size:12px;color:${C.faint};">${esc(f.referCode)}<br><span style="display:inline-block;margin-top:4px;padding:8px 14px;border:1px dashed ${C.gold};border-radius:10px;background:#fdf9f3;font-family:Menlo,Consolas,monospace;font-size:20px;letter-spacing:0.12em;color:${C.ink};">${esc(referral.code)}</span></p>
+         ${btn(referral.url, f.referCta, C.gold)}
+         <p style="margin:10px 0 0;font-size:12px;color:${C.faint};word-break:break-all;">${esc(referral.url)}</p>`,
       )
     : "";
 
@@ -682,6 +715,7 @@ export async function sendBookingFollowUp(d: BookingEmailData, serviceSlug: stri
   <tr><td style="font-family:Arial,Helvetica,sans-serif;">
     ${reviewCard}
     ${card(f.rebookTitle, `<p style="margin:0 0 12px;font-size:14px;color:${C.ink};line-height:1.55;">${esc(rebookText)}</p>${btn(rebookUrl, f.rebookCta, C.ink)}<p style="margin:12px 0 0;font-size:12px;color:${C.faint};">${esc(f.club)}</p>`)}
+    ${referCard}
     <p style="margin:0 6px 4px;font-size:14px;color:${C.soft};line-height:1.55;">${esc(f.issue)}</p>
     <p style="margin:0 6px 26px;font-size:14px;color:${C.soft};line-height:1.55;">${esc(COPY[d.locale].seeYou)}<br><span style="color:${C.ink};">${esc(COPY[d.locale].signature)}</span></p>
     <p style="margin:0 6px;font-size:12px;color:${C.faint};">
@@ -704,6 +738,7 @@ export async function sendBookingFollowUp(d: BookingEmailData, serviceSlug: stri
     rebookText,
     `${f.rebookCta}: ${rebookUrl}`,
     "",
+    referral ? `${f.referTitle} — ${f.referText}\n${f.referCode}: ${referral.code}\n${referral.url}\n` : null,
     f.issue,
     COPY[d.locale].seeYou,
     COPY[d.locale].signature,
@@ -753,7 +788,9 @@ export async function sendOwnerBookingNotice(d: BookingEmailData): Promise<void>
         ${d.addonNames.length ? row("Extras", esc(d.addonNames.join(", "))) : ""}
         ${row("Quand", `<strong>${esc(when)}</strong>`)}
         ${row("Durée", `${d.durationMin} min`)}
+        ${d.referralDiscountCents ? row("Parrainage", `code ${esc(d.referralCode ?? "")} · −${money(d.referralDiscountCents)} (1re visite)`) : ""}
         ${d.estimatedTotalCents != null ? row("Total estimé", money(d.estimatedTotalCents)) : ""}
+        ${d.referralCreditCents ? row("Crédit parrainage à déduire", `<strong>−${money(d.referralCreditCents)}</strong>`, true) : ""}
         ${row("Dépôt", `${money(d.depositCents)} — ${d.depositPaid ? "payé ✓" : "non payé"}`, true)}
         ${row("Réf.", `<span style="font-family:Menlo,Consolas,monospace;font-size:12px;">${esc(d.reference)}</span>`)}
       </table>
@@ -767,7 +804,9 @@ export async function sendOwnerBookingNotice(d: BookingEmailData): Promise<void>
     `Cliente: ${d.contactName} <${d.contactEmail}>${d.contactPhone ? ` · ${d.contactPhone}` : ""}`,
     `Service: ${d.serviceName}${d.addonNames.length ? ` + ${d.addonNames.join(", ")}` : ""}`,
     `Quand: ${when} (${d.durationMin} min)`,
+    d.referralDiscountCents ? `Parrainage: code ${d.referralCode} · −${money(d.referralDiscountCents)} (1re visite)` : null,
     d.estimatedTotalCents != null ? `Total estimé: ${money(d.estimatedTotalCents)}` : null,
+    d.referralCreditCents ? `Crédit parrainage à déduire: −${money(d.referralCreditCents)}` : null,
     `Dépôt: ${money(d.depositCents)} — ${d.depositPaid ? "payé" : "non payé"}`,
     `Réf: ${d.reference}`,
     d.notes ? `Note: ${d.notes}` : null,

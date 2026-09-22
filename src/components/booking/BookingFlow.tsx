@@ -14,7 +14,7 @@ type Props = {
   sets: BookableService[];
   addons: BookableService[];
   openWeekdays: number[];
-  prefill: { serviceSlug?: string; addonSlugs: string[] };
+  prefill: { serviceSlug?: string; addonSlugs: string[]; referralCode?: string };
   inspoEnabled: boolean;
 };
 
@@ -35,6 +35,7 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill, inspoEnabled 
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [referral, setReferral] = useState(prefill.referralCode ?? "");
   const [inspo, setInspo] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,6 +98,7 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill, inspoEnabled 
         contactEmail: email,
         contactPhone: phone || undefined,
         notes: notes.trim() || undefined,
+        referralCode: referral.trim() || undefined,
         inspoImages: inspo,
         locale,
       });
@@ -302,6 +304,20 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill, inspoEnabled 
               className="rounded-[var(--radius-lg)] border border-line bg-white px-3.5 py-2.5 text-[0.95rem] focus-visible:border-gold-muted"
             />
           </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="font-ui text-[0.8rem] font-semibold text-ink-soft">{t("book.referral")}</span>
+            <input
+              type="text"
+              value={referral}
+              onChange={(e) => setReferral(e.target.value.toUpperCase())}
+              autoCapitalize="characters"
+              autoComplete="off"
+              maxLength={14}
+              placeholder="LISE7K"
+              className="rounded-[var(--radius-lg)] border border-line bg-white px-3.5 py-2.5 font-mono text-[0.95rem] tracking-[0.08em] focus-visible:border-gold-muted"
+            />
+            <span className="text-[0.78rem] text-ink-faint">{t("book.referralHint")}</span>
+          </label>
           {inspoEnabled && <InspoUpload urls={inspo} onChange={setInspo} />}
           <NavRow
             onBack={() => go(2)}
@@ -324,7 +340,8 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill, inspoEnabled 
             <Row k={t("book.step.date")} v={whenLabel} />
             <Row k={t("book.duration")} v={`${durationMin} min`} />
             {inspo.length > 0 && <Row k={t("book.inspoLabel")} v={t("book.inspoCount", { n: inspo.length })} />}
-            <Row k={t("book.estTotal")} v={formatMoneyFromCents(estTotalCents, locale)} />
+            {referral.trim() && <Row k={t("book.referralRow", { code: referral.trim() })} v={`−${formatMoneyFromCents(1000, locale)}`} />}
+            <Row k={t("book.estTotal")} v={formatMoneyFromCents(Math.max(0, estTotalCents - (referral.trim() ? 1000 : 0)), locale)} />
             <Row k={t("book.depositDue")} v={formatMoneyFromCents(DEPOSIT_CENTS, locale)} strong />
           </dl>
 
@@ -334,7 +351,11 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill, inspoEnabled 
             <p className="mt-1.5">{t("policy.cancel")}</p>
           </div>
 
-          {error && <p className="text-sm text-terracotta">{t("book.noSlots")}</p>}
+          {error && (
+            <p className="text-sm text-terracotta">
+              {error === "REFERRAL_INVALID" ? t("book.referralInvalid") : t("book.noSlots")}
+            </p>
+          )}
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <button type="button" onClick={() => go(3)} className="btn btn--ghost btn--sm">

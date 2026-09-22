@@ -98,6 +98,7 @@ export default async function ReserverPage({
           prefill={{
             serviceSlug: prefillService,
             addonSlugs: prefillAddons,
+            referralCode: first(sp.parrain) ?? first(sp.ref) ?? undefined,
           }}
           inspoEnabled={inspoUploadEnabled()}
         />

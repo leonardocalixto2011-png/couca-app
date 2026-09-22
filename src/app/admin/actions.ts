@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/admin";
 import { signOut } from "@/auth";
 import { STUDIO_TZ } from "@/lib/policy";
 import { creditBookingVisit, uncreditBookingVisit } from "@/lib/loyalty";
+import { REFERRAL_CENTS, ensureReferralCode, rewardReferrerForBooking } from "@/lib/referral";
 import { syncServiceCatalogue, type SyncResult } from "@/lib/catalogue";
 import { LOYALTY_TIERS } from "@/lib/brand";
 import type { BookingStatus } from "@prisma/client";
@@ -24,7 +25,10 @@ export async function setBookingStatus(id: string, status: string) {
       depositForfeited: status === "NO_SHOW",
     },
   });
-  if (status === "COMPLETED") await creditBookingVisit(id);
+  if (status === "COMPLETED") {
+    await creditBookingVisit(id);
+    await rewardReferrerForBooking(id);
+  }
   else if (updated.loyaltyCounted) await uncreditBookingVisit(id);
 
   revalidatePath("/admin");
@@ -122,6 +126,23 @@ export async function adjustLoyaltyVisits(customerId: string, delta: 1 | -1) {
   });
   revalidatePath("/admin/customers");
   revalidatePath("/compte");
+}
+
+/** Studio applied 10 $ of referral credit on this client's bill. */
+export async function applyReferralCredit(customerId: string) {
+  await requireAdmin();
+  await prisma.customer.updateMany({
+    where: { id: customerId, referralCreditCents: { gte: REFERRAL_CENTS } },
+    data: { referralCreditCents: { decrement: REFERRAL_CENTS } },
+  });
+  revalidatePath("/admin/customers");
+}
+
+/** Creates the client's personal referral code so the studio can share it. */
+export async function createReferralCode(customerId: string) {
+  await requireAdmin();
+  await ensureReferralCode(customerId);
+  revalidatePath("/admin/customers");
 }
 
 export async function adminSignOut() {

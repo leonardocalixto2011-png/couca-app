@@ -3,6 +3,7 @@ import { adminListCustomers } from "@/lib/admin";
 import { fmtDate } from "@/lib/fmt";
 import { LOYALTY_TIERS } from "@/lib/brand";
 import { LoyaltyAdjust } from "./LoyaltyAdjust";
+import { ReferralCell } from "./ReferralCell";
 
 function nextTier(visits: number) {
   return LOYALTY_TIERS.find((t) => visits < t.visit)?.visit ?? null;
@@ -23,6 +24,11 @@ export default async function AdminCustomers({
         <p className="mt-1 text-sm text-ink-soft">
           Le compteur Couca Club monte tout seul quand une réservation passe à «&nbsp;Terminée&nbsp;». Les boutons ± servent aux cas
           spéciaux (visite sans réservation en ligne, inscription après la visite, autre courriel).
+        </p>
+        <p className="mt-2 text-sm text-ink-soft">
+          <strong>Parrainage</strong> : chaque cliente reçoit son code dans le courriel de remerciement. Une amie qui réserve avec ce
+          code a 10&nbsp;$ de rabais sur sa 1re visite (déjà déduit du total estimé). Quand sa visite passe à «&nbsp;Terminée&nbsp;»,
+          la marraine gagne 10&nbsp;$ de crédit : déduisez-le en studio puis touchez «&nbsp;Appliquer 10&nbsp;$&nbsp;».
         </p>
       </div>
 
@@ -46,7 +52,7 @@ export default async function AdminCustomers({
         <p className="text-sm text-ink-faint">Aucune cliente{q ? " pour cette recherche" : ""}.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] border-collapse text-[0.9rem]">
+          <table className="w-full min-w-[860px] border-collapse text-[0.9rem]">
             <thead>
               <tr className="border-b border-line text-left text-[0.72rem] uppercase tracking-[0.12em] text-ink-faint">
                 <th className="py-2 pr-3 font-semibold">Cliente</th>
@@ -54,6 +60,7 @@ export default async function AdminCustomers({
                 <th className="py-2 pr-3 font-semibold">Réservations</th>
                 <th className="py-2 pr-3 font-semibold">Dernière visite</th>
                 <th className="py-2 pr-3 font-semibold">Couca Club</th>
+                <th className="py-2 pr-3 font-semibold">Parrainage</th>
                 <th className="py-2 font-semibold">Compte</th>
               </tr>
             </thead>
@@ -80,6 +87,9 @@ export default async function AdminCustomers({
                       <span className="block text-[0.72rem] text-ink-faint">
                         {next ? `prochaine attention à la ${next}e` : "tous les paliers atteints"}
                       </span>
+                    </td>
+                    <td className="py-2.5 pr-3">
+                      <ReferralCell customerId={c.id} code={c.referralCode} creditCents={c.referralCreditCents} />
                     </td>
                     <td className="py-2.5 text-[0.78rem] text-ink-faint">{c.userId ? "inscrite" : "invitée"}</td>
                   </tr>

@@ -14,6 +14,7 @@ import {
 } from "./policy";
 import type { BookingStatus } from "@prisma/client";
 import type { Locale } from "@/i18n/messages";
+import { REFERRAL_CENTS, checkReferralForBooking, normalizeReferralCode } from "./referral";
 import type { BookingEmailData } from "./email";
 
 const ACTIVE_STATUSES: BookingStatus[] = ["PENDING", "CONFIRMED"];
@@ -152,6 +153,8 @@ export type CreateBookingInput = {
   contactPhone?: string;
   notes?: string;
   inspoImages?: string[];
+  /** Referral ("parrainage") code from a friend: 10 $ off a first visit. */
+  referralCode?: string;
   locale: "fr" | "en";
 };
 
@@ -212,6 +215,15 @@ export async function createBooking(input: CreateBookingInput): Promise<CreatedB
     });
     if (overlappingOff) throw new Error("SLOT_TAKEN");
 
+    // Referral code: only for a first visit, and never your own code.
+    let referralCode: string | null = null;
+    if (input.referralCode?.trim()) {
+      const code = normalizeReferralCode(input.referralCode);
+      if (!code || !(await checkReferralForBooking(code, email, tx))) throw new Error("REFERRAL_INVALID");
+      referralCode = code;
+    }
+    const referralDiscountCents = referralCode ? REFERRAL_CENTS : 0;
+
     // Link (or create) the customer record by email so history + loyalty attach.
     const customer = await tx.customer.upsert({
       where: { email },
@@ -231,8 +243,10 @@ export async function createBooking(input: CreateBookingInput): Promise<CreatedB
         notes: input.notes?.trim() || null,
         inspoImages: (input.inspoImages ?? []).filter((u) => /^https:\/\//.test(u)).slice(0, 3),
         locale: input.locale,
-        estimatedTotalCents: priceCents,
+        estimatedTotalCents: Math.max(0, priceCents - referralDiscountCents),
         depositCents: DEPOSIT_CENTS,
+        referralCode,
+        referralDiscountCents,
         status: "PENDING",
         customerId: customer.id,
       },
@@ -246,7 +260,7 @@ export async function createBooking(input: CreateBookingInput): Promise<CreatedB
     endAt: booking.endAt,
     serviceName: { fr: service.nameFr, en: service.nameEn },
     addonNames: addons.map((a) => ({ fr: a.nameFr, en: a.nameEn })),
-    estimatedTotalCents: priceCents,
+    estimatedTotalCents: booking.estimatedTotalCents ?? priceCents,
     depositCents: DEPOSIT_CENTS,
   };
 }
@@ -268,7 +282,10 @@ export async function markDepositPaid(bookingId: string) {
 
 /** Everything the confirmation / reminder / owner emails need, addon slugs resolved to names. */
 export async function loadBookingForEmail(bookingId: string): Promise<BookingEmailData | null> {
-  const b = await prisma.booking.findUnique({ where: { id: bookingId }, include: { service: true } });
+  const b = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { service: true, customer: { select: { referralCreditCents: true } } },
+  });
   if (!b) return null;
   const slugs = Array.isArray(b.addonSlugs) ? (b.addonSlugs as string[]) : [];
   const addons = slugs.length
@@ -293,5 +310,8 @@ export async function loadBookingForEmail(bookingId: string): Promise<BookingEma
     depositPaid: b.depositPaid,
     notes: b.notes,
     inspoImages: Array.isArray(b.inspoImages) ? (b.inspoImages as string[]) : [],
+    referralCode: b.referralCode,
+    referralDiscountCents: b.referralDiscountCents,
+    referralCreditCents: b.customer?.referralCreditCents ?? 0,
   };
 }
