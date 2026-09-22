@@ -81,6 +81,15 @@ export function ownerSmsAddresses(): string[] {
   return splitList(process.env.OWNER_SMS_EMAIL);
 }
 
+/**
+ * Every email to a client goes through here so the studio inbox always gets a
+ * copy (BCC, so the client never sees the studio address in the recipients).
+ */
+async function sendClientEmail(input: Omit<SendInput, "bcc"> & { to: string }): Promise<void> {
+  const client = input.to.toLowerCase();
+  await sendEmail({ ...input, bcc: ownerNotifyAddresses().filter((a) => a.toLowerCase() !== client) });
+}
+
 async function sendOwnerSms(text: string): Promise<void> {
   const to = ownerSmsAddresses();
   if (!to.length) return;
@@ -384,10 +393,8 @@ function renderClientEmail(kind: "confirmation" | "reminder", d: BookingEmailDat
 
 export async function sendBookingConfirmation(d: BookingEmailData): Promise<void> {
   const { subject, html, text } = renderClientEmail("confirmation", d);
-  await sendEmail({
+  await sendClientEmail({
     to: d.contactEmail,
-    // The studio inbox keeps an exact copy of what the client received.
-    bcc: ownerNotifyAddresses().filter((a) => a.toLowerCase() !== d.contactEmail.toLowerCase()),
     subject,
     html,
     text,
@@ -416,7 +423,7 @@ ${text}`,
 
 export async function sendBookingReminder(d: BookingEmailData): Promise<void> {
   const { subject, html, text } = renderClientEmail("reminder", d);
-  await sendEmail({ to: d.contactEmail, subject, html, text, replyTo: BRAND.email });
+  await sendClientEmail({ to: d.contactEmail, subject, html, text, replyTo: BRAND.email });
 }
 
 // ---------------------------------------------------------------------------
@@ -545,9 +552,8 @@ export async function sendDepositReminder(d: BookingEmailData, payUrl: string): 
     c.signature,
   ].join("\n");
 
-  await sendEmail({
+  await sendClientEmail({
     to: d.contactEmail,
-    bcc: ownerNotifyAddresses().filter((a) => a.toLowerCase() !== d.contactEmail.toLowerCase()),
     subject,
     html,
     text,
@@ -663,7 +669,7 @@ export async function sendBookingFollowUp(d: BookingEmailData, serviceSlug: stri
     .filter((l) => l != null)
     .join("\n");
 
-  await sendEmail({ to: d.contactEmail, subject: f.subject, html, text, replyTo: BRAND.email });
+  await sendClientEmail({ to: d.contactEmail, subject: f.subject, html, text, replyTo: BRAND.email });
 }
 
 // ---------------------------------------------------------------------------
