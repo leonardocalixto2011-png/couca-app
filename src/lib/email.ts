@@ -19,6 +19,7 @@ type Attachment = { filename: string; content: string }; // base64
 
 type SendInput = {
   to: string | string[];
+  bcc?: string[];
   subject: string;
   html?: string;
   text: string;
@@ -40,6 +41,7 @@ export async function sendEmail(input: SendInput): Promise<void> {
       body: JSON.stringify({
         from,
         to: input.to,
+        bcc: input.bcc?.length ? input.bcc : undefined,
         subject: input.subject,
         html: input.html,
         text: input.text,
@@ -53,10 +55,10 @@ export async function sendEmail(input: SendInput): Promise<void> {
   }
 }
 
-/** Where owner notifications go. Falls back to the admin login email. */
+/** Parses a comma/semicolon/space-separated list of email addresses. */
 function splitList(v: string | undefined): string[] {
   return (v ?? "")
-    .split(/[,;s]+/)
+    .split(/[,;\s]+/)
     .map((x) => x.trim())
     .filter((x) => x.includes("@"));
 }
@@ -384,10 +386,30 @@ export async function sendBookingConfirmation(d: BookingEmailData): Promise<void
   const { subject, html, text } = renderClientEmail("confirmation", d);
   await sendEmail({
     to: d.contactEmail,
+    // The studio inbox keeps an exact copy of what the client received.
+    bcc: ownerNotifyAddresses().filter((a) => a.toLowerCase() !== d.contactEmail.toLowerCase()),
     subject,
     html,
     text,
     replyTo: BRAND.email,
+    attachments: [{ filename: "couca-rendez-vous.ics", content: Buffer.from(buildBookingIcs(d)).toString("base64") }],
+  });
+}
+
+/**
+ * Sends a copy of a booking's confirmation to the studio inbox ONLY (never the
+ * client). Used to backfill bookings made before the studio was BCC'd.
+ */
+export async function sendConfirmationCopyToStudio(d: BookingEmailData): Promise<void> {
+  const { subject, html, text } = renderClientEmail("confirmation", d);
+  await sendEmail({
+    to: ownerNotifyAddresses(),
+    subject: `[Copie studio] ${subject} · ${d.contactName}`,
+    html,
+    text: `Copie de la confirmation envoyée à ${d.contactName} <${d.contactEmail}>
+
+${text}`,
+    replyTo: d.contactEmail,
     attachments: [{ filename: "couca-rendez-vous.ics", content: Buffer.from(buildBookingIcs(d)).toString("base64") }],
   });
 }
