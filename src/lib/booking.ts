@@ -315,3 +315,69 @@ export async function loadBookingForEmail(bookingId: string): Promise<BookingEma
     referralCreditCents: b.customer?.referralCreditCents ?? 0,
   };
 }
+
+/**
+ * Which of the next `days` calendar days can actually take this booking.
+ * One pass over hours/bookings/time-off instead of a query per day, so the
+ * date step can grey out full days and point at the next real opening.
+ */
+export async function listOpenDates(params: {
+  serviceSlug: string;
+  addonSlugs: string[];
+  days?: number;
+}): Promise<string[]> {
+  const { serviceSlug, addonSlugs } = params;
+  const days = Math.min(params.days ?? BOOKING_HORIZON_DAYS, BOOKING_HORIZON_DAYS);
+  const { durationMin } = await resolveServices(serviceSlug, addonSlugs);
+
+  const todayISO = todayISOInStudio();
+  const first = studioMidnightUtc(todayISO);
+  const rangeEnd = new Date(first.getTime() + (days + 1) * 24 * 60 * 60 * 1000);
+
+  const [hours, bookings, timeOff] = await Promise.all([
+    prisma.businessHours.findMany(),
+    prisma.booking.findMany({
+      where: { status: { in: ACTIVE_STATUSES }, startAt: { gte: first, lt: rangeEnd } },
+      select: { startAt: true, endAt: true },
+    }),
+    prisma.timeOff.findMany({
+      where: { startAt: { lt: rangeEnd }, endAt: { gt: first } },
+      select: { startAt: true, endAt: true },
+    }),
+  ]);
+  const hoursByWeekday = new Map(hours.map((h) => [h.weekday, h]));
+
+  const open: string[] = [];
+  for (let i = 1; i <= days; i++) {
+    const dayStart = new Date(first.getTime() + i * 24 * 60 * 60 * 1000);
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+    const zoned = toZonedTime(dayStart, STUDIO_TZ);
+    const dateISO = `${zoned.getFullYear()}-${String(zoned.getMonth() + 1).padStart(2, "0")}-${String(zoned.getDate()).padStart(2, "0")}`;
+    const h = hoursByWeekday.get(zoned.getDay());
+    if (!h || !h.isOpen) continue;
+
+    const busy: Interval[] = [];
+    for (const b of bookings) {
+      if (b.startAt < dayEnd && b.endAt > dayStart) {
+        busy.push({ startMin: minutesOfDayInStudio(b.startAt), endMin: minutesOfDayInStudio(b.endAt) });
+      }
+    }
+    for (const off of timeOff) {
+      if (off.startAt < dayEnd && off.endAt > dayStart) {
+        busy.push({
+          startMin: off.startAt < dayStart ? 0 : minutesOfDayInStudio(off.startAt),
+          endMin: off.endAt > dayEnd ? 1440 : minutesOfDayInStudio(off.endAt),
+        });
+      }
+    }
+
+    const minutes = generateSlotMinutes({
+      day: { isOpen: true, openMin: h.openMin, closeMin: h.closeMin },
+      durationMin,
+      busy,
+      step: SLOT_STEP_MIN,
+    });
+    if (minutes.length > 0) open.push(dateISO);
+  }
+  return open;
+}

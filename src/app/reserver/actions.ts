@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import {
   createBooking,
   getDayAvailability,
+  listOpenDates,
   loadBookingForEmail,
   type CreateBookingInput,
   type Slot,
@@ -26,6 +27,18 @@ export async function fetchSlots(input: {
     return { ok: true, slots, durationMin, closed };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "UNKNOWN" };
+  }
+}
+
+/** Days in the booking horizon that still have at least one free slot. */
+export async function fetchOpenDates(input: {
+  serviceSlug: string;
+  addonSlugs: string[];
+}): Promise<{ ok: true; dates: string[] } | { ok: false }> {
+  try {
+    return { ok: true, dates: await listOpenDates(input) };
+  } catch {
+    return { ok: false };
   }
 }
 

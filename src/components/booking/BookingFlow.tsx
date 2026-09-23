@@ -6,7 +6,7 @@ import { useLocale } from "@/i18n/LocaleProvider";
 import { Icon } from "@/components/Icon";
 import { cn, formatMoneyFromCents } from "@/lib/utils";
 import { DEPOSIT_CENTS, BOOKING_HORIZON_DAYS, STUDIO_TZ } from "@/lib/policy";
-import { fetchSlots, submitBooking, type SlotsResult } from "@/app/reserver/actions";
+import { fetchOpenDates, fetchSlots, submitBooking, type SlotsResult } from "@/app/reserver/actions";
 import type { BookableService, Slot } from "@/lib/booking";
 import { InspoUpload } from "./InspoUpload";
 
@@ -38,6 +38,9 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill, inspoEnabled 
   const [referral, setReferral] = useState(prefill.referralCode ?? "");
   const [inspo, setInspo] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Days with at least one free slot for the chosen service (null = not loaded yet).
+  const [openDates, setOpenDates] = useState<string[] | null>(null);
+  const [datesPending, setDatesPending] = useState(false);
 
   const svc = sets.find((s) => s.slug === serviceSlug);
   const chosenAddons = addons.filter((a) => addonSlugs.includes(a.slug));
@@ -63,6 +66,22 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill, inspoEnabled 
     }
     return out;
   }, [locale, openWeekdays]);
+
+  /** Loads which days still have a free slot for the chosen service + add-ons. */
+  async function loadOpenDates() {
+    if (!serviceSlug) return;
+    setDatesPending(true);
+    try {
+      const res = await fetchOpenDates({ serviceSlug, addonSlugs });
+      setOpenDates(res.ok ? res.dates : []);
+    } finally {
+      setDatesPending(false);
+    }
+  }
+
+  const openSet = useMemo(() => (openDates ? new Set(openDates) : null), [openDates]);
+  const nextOpen = openDates?.[0] ?? null;
+  const nextOpenLabel = days.find((d) => d.iso === nextOpen)?.label ?? null;
 
   function toggleAddon(slug: string) {
     setAddonSlugs((prev) => (prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]));
@@ -208,7 +227,10 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill, inspoEnabled 
           </fieldset>
 
           <NavRow
-            onNext={() => go(1)}
+            onNext={() => {
+              go(1);
+              void loadOpenDates();
+            }}
             nextDisabled={!serviceSlug}
             nextLabel={t("book.next")}
             t={t}
@@ -222,26 +244,50 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill, inspoEnabled 
           <p className="font-ui text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-ink-soft">
             {t("book.pickDate")}
           </p>
+          {datesPending && <p className="text-sm text-ink-faint">{t("book.datesLoading")}</p>}
+          {!datesPending && openSet && nextOpen && (
+            <button
+              type="button"
+              onClick={() => {
+                loadSlots(nextOpen);
+                go(2);
+              }}
+              className="self-start rounded-[var(--radius-lg)] border border-[var(--line-gold)] bg-[color-mix(in_srgb,var(--color-gold)_7%,transparent)] px-4 py-2.5 text-left text-[0.9rem] hover:border-terracotta"
+            >
+              <span className="block font-ui text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-ink-soft">
+                {t("book.nextAvailable")}
+              </span>
+              <span className="font-medium text-ink">{nextOpenLabel ?? nextOpen} →</span>
+            </button>
+          )}
+          {!datesPending && openSet && !nextOpen && (
+            <p className="rounded-[var(--radius-lg)] border border-dashed border-[var(--line-gold)] bg-[color-mix(in_srgb,var(--color-gold)_5%,transparent)] p-4 text-[0.9rem] text-ink-soft">
+              {t("book.fullyBooked")}
+            </p>
+          )}
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {days.map((d) => (
+            {days.map((d) => {
+              const free = openSet ? openSet.has(d.iso) : d.open;
+              return (
               <button
                 key={d.iso}
                 type="button"
-                disabled={!d.open}
+                disabled={!d.open || (openSet !== null && !free)}
                 onClick={() => {
                   loadSlots(d.iso);
                   go(2);
                 }}
                 className={cn(
                   "rounded-[var(--radius-lg)] border px-2 py-2.5 text-center text-[0.86rem] transition-colors",
-                  d.open
+                  d.open && free
                     ? "border-line hover:border-terracotta hover:bg-blush"
                     : "cursor-not-allowed border-line/60 text-ink-faint line-through",
                 )}
               >
                 {d.label}
               </button>
-            ))}
+              );
+            })}
           </div>
           <NavRow onBack={() => go(0)} t={t} />
         </div>
