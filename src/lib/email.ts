@@ -750,6 +750,188 @@ export async function sendBookingFollowUp(
 }
 
 // ---------------------------------------------------------------------------
+// "Time for your fill" nudge, ~2.5 weeks after a completed set
+// ---------------------------------------------------------------------------
+
+const NUDGE = {
+  fr: {
+    subject: "C'est bientôt le moment de votre remplissage ✨",
+    title: "Vos ongles ont poussé ?",
+    lead: (svc: string, when: string) =>
+      `Votre ${svc} du ${when} approche de la zone « remplissage ». Deux à trois semaines, c'est le moment idéal pour garder une pose nette et solide.`,
+    cta: "Choisir mon prochain moment",
+    why: "Attendre trop longtemps fragilise la pose et allonge le rendez-vous. Un remplissage à temps, c'est plus joli et moins cher qu'une nouvelle pose.",
+    flexible: "Pas encore prêt ? Répondez à ce courriel et on vous garde un créneau quand vous voulez.",
+  },
+  en: {
+    subject: "Time for your fill soon ✨",
+    title: "Nails growing out?",
+    lead: (svc: string, when: string) =>
+      `Your ${svc} from ${when} is getting close to fill territory. Two to three weeks is the sweet spot to keep the set clean and strong.`,
+    cta: "Pick my next time",
+    why: "Waiting too long weakens the set and makes the appointment longer. A fill on time looks better and costs less than a new set.",
+    flexible: "Not ready yet? Reply to this email and we'll hold a spot whenever you are.",
+  },
+} as const;
+
+export async function sendRebookNudge(d: BookingEmailData, serviceSlug: string): Promise<void> {
+  const n = NUDGE[d.locale];
+  const c = COPY[d.locale];
+  const when = fmtWhen(d.startAt, d.locale, { weekday: "long", day: "numeric", month: "long", hour: undefined, minute: undefined });
+  const url = `${BRAND.domain}/reserver?service=${encodeURIComponent(rebookSlugFor(serviceSlug))}&utm_source=email&utm_medium=nudge&utm_campaign=fill`;
+
+  const html = `<!doctype html>
+<html lang="${d.locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(n.subject)}</title></head>
+<body style="margin:0;padding:0;background:${C.cream};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.cream};">
+<tr><td align="center" style="padding:28px 14px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;font-family:Georgia,'Times New Roman',serif;color:${C.ink};">
+  <tr><td style="padding:0 6px 18px;">
+    <span style="font-size:22px;font-weight:600;">Couca &amp; Co.</span>
+    <span style="display:block;font-size:10px;letter-spacing:0.34em;text-transform:uppercase;color:${C.gold};font-family:Arial,Helvetica,sans-serif;">Nail Studio</span>
+  </td></tr>
+  <tr><td style="padding:0 6px 6px;"><h1 style="margin:0;font-size:30px;font-weight:500;line-height:1.15;">${esc(n.title)}</h1></td></tr>
+  <tr><td style="padding:0 6px 22px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:${C.soft};">
+    <p style="margin:0 0 6px;">${esc(c.hello(d.contactName))}</p>
+    <p style="margin:0;">${esc(n.lead(d.serviceName, when))}</p>
+  </td></tr>
+  <tr><td style="font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;border:1px solid ${C.gold};border-radius:16px;background:#fdf9f3;">
+      <tr><td style="padding:20px;text-align:center;">
+        <a href="${esc(url)}" style="display:block;padding:14px 22px;border-radius:999px;background:${C.terracotta};color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;">${esc(n.cta)} →</a>
+        <p style="margin:12px 0 0;font-size:13px;color:${C.soft};line-height:1.5;">${esc(n.why)}</p>
+      </td></tr>
+    </table>
+    <p style="margin:0 6px 18px;font-size:13px;color:${C.soft};line-height:1.55;">${esc(n.flexible)}</p>
+    <p style="margin:0 6px 26px;font-size:14px;color:${C.soft};line-height:1.55;">${esc(c.seeYou)}<br><span style="color:${C.ink};">${esc(c.signature)}</span></p>
+    <p style="margin:0 6px;font-size:12px;color:${C.faint};">
+      <a href="${BRAND.instagramProfile}" style="color:${C.terracotta};text-decoration:none;">Instagram ${esc(BRAND.instagramHandle)}</a>
+      &nbsp;·&nbsp; <a href="${BRAND.domain}" style="color:${C.terracotta};text-decoration:none;">coucabeauty.ca</a>
+    </p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+
+  const text = [n.title, "", c.hello(d.contactName), n.lead(d.serviceName, when), "", `${n.cta}: ${url}`, n.why, "", n.flexible, c.seeYou, c.signature].join("\n");
+  await sendClientEmail({ to: d.contactEmail, subject: n.subject, html, text, replyTo: BRAND.email });
+}
+
+// ---------------------------------------------------------------------------
+// Waitlist
+// ---------------------------------------------------------------------------
+
+export type WaitlistEntry = {
+  name: string;
+  email: string;
+  phone?: string | null;
+  serviceName?: string | null;
+  wantedDate?: string | null;
+  locale: Locale;
+};
+
+const WAIT = {
+  fr: {
+    ack: "Vous êtes sur la liste ✨",
+    ackTitle: "C'est noté",
+    ackLead: "Dès qu'une place se libère, vous serez prévenue par courriel — souvent avant que ce soit visible en ligne.",
+    ackNote: "Aucun engagement : vous réservez seulement si le moment vous convient.",
+    openSubject: "Une place vient de se libérer 💅🏾",
+    openTitle: "Une place s'est libérée",
+    openLead: "Vous nous aviez demandé de vous prévenir. Il y a maintenant de la place dans l'agenda — les rendez-vous partent vite, alors c'est premier arrivé, premier servi.",
+    openCta: "Voir les disponibilités",
+  },
+  en: {
+    ack: "You're on the list ✨",
+    ackTitle: "All set",
+    ackLead: "As soon as a spot frees up, you'll get an email — often before it shows online.",
+    ackNote: "No commitment: you only book if the time works for you.",
+    openSubject: "A spot just opened up 💅🏾",
+    openTitle: "A spot just opened",
+    openLead: "You asked us to let you know. There's room in the calendar now, and spots go fast, so it's first come, first served.",
+    openCta: "See what's open",
+  },
+} as const;
+
+function waitFrame(title: string, bodyHtml: string, locale: Locale): string {
+  return `<!doctype html>
+<html lang="${locale}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(title)}</title></head>
+<body style="margin:0;padding:0;background:${C.cream};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.cream};">
+<tr><td align="center" style="padding:28px 14px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;font-family:Georgia,'Times New Roman',serif;color:${C.ink};">
+  <tr><td style="padding:0 6px 18px;">
+    <span style="font-size:22px;font-weight:600;">Couca &amp; Co.</span>
+    <span style="display:block;font-size:10px;letter-spacing:0.34em;text-transform:uppercase;color:${C.gold};font-family:Arial,Helvetica,sans-serif;">Nail Studio</span>
+  </td></tr>
+  <tr><td style="padding:0 6px 6px;"><h1 style="margin:0;font-size:30px;font-weight:500;line-height:1.15;">${esc(title)}</h1></td></tr>
+  <tr><td style="font-family:Arial,Helvetica,sans-serif;">${bodyHtml}</td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+/** Confirms to the client that she is on the waitlist. */
+export async function sendWaitlistAck(e: WaitlistEntry): Promise<void> {
+  const w = WAIT[e.locale];
+  const c = COPY[e.locale];
+  const body = `<p style="margin:0 0 6px;font-size:15px;color:${C.soft};">${esc(c.hello(e.name))}</p>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.55;color:${C.soft};">${esc(w.ackLead)}</p>
+    ${e.serviceName ? card(c.service, `<p style="margin:0;font-size:15px;color:${C.ink};">${esc(e.serviceName)}${e.wantedDate ? ` · ${esc(e.wantedDate)}` : ""}</p>`) : ""}
+    <p style="margin:0 6px 24px;font-size:13px;color:${C.faint};">${esc(w.ackNote)}</p>
+    <p style="margin:0 6px;font-size:12px;color:${C.faint};"><a href="${BRAND.domain}" style="color:${C.terracotta};text-decoration:none;">coucabeauty.ca</a></p>`;
+  await sendClientEmail({
+    to: e.email,
+    subject: w.ack,
+    html: waitFrame(w.ackTitle, body, e.locale),
+    text: `${w.ackTitle}\n\n${c.hello(e.name)}\n${w.ackLead}\n${w.ackNote}\n${BRAND.domain}`,
+    replyTo: BRAND.email,
+  });
+}
+
+/** Tells a waiting client that the calendar has room again. */
+export async function sendWaitlistOpening(e: WaitlistEntry, bookUrl: string): Promise<void> {
+  const w = WAIT[e.locale];
+  const c = COPY[e.locale];
+  const body = `<p style="margin:0 0 6px;font-size:15px;color:${C.soft};">${esc(c.hello(e.name))}</p>
+    <p style="margin:0 0 18px;font-size:15px;line-height:1.55;color:${C.soft};">${esc(w.openLead)}</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;border:1px solid ${C.gold};border-radius:16px;background:#fdf9f3;">
+      <tr><td style="padding:20px;text-align:center;">
+        <a href="${esc(bookUrl)}" style="display:block;padding:14px 22px;border-radius:999px;background:${C.terracotta};color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;">${esc(w.openCta)} →</a>
+      </td></tr>
+    </table>
+    <p style="margin:0 6px 24px;font-size:14px;color:${C.soft};">${esc(c.seeYou)}<br><span style="color:${C.ink};">${esc(c.signature)}</span></p>`;
+  await sendClientEmail({
+    to: e.email,
+    subject: w.openSubject,
+    html: waitFrame(w.openTitle, body, e.locale),
+    text: `${w.openTitle}\n\n${c.hello(e.name)}\n${w.openLead}\n\n${w.openCta}: ${bookUrl}\n\n${c.seeYou}\n${c.signature}`,
+    replyTo: BRAND.email,
+  });
+}
+
+/** Tells the studio someone joined the waitlist. */
+export async function sendOwnerWaitlistNotice(e: WaitlistEntry): Promise<void> {
+  const to = ownerNotifyAddresses();
+  const lines = [
+    `Cliente: ${e.name} <${e.email}>${e.phone ? ` · ${e.phone}` : ""}`,
+    e.serviceName ? `Service souhaité: ${e.serviceName}` : null,
+    e.wantedDate ? `Date souhaitée: ${e.wantedDate}` : null,
+    "Elle sera prévenue automatiquement dès qu'une place se libère.",
+  ].filter((l) => l != null);
+  const inner = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${C.line};border-radius:14px;background:#fff;"><tr><td style="padding:14px 18px;font-size:14px;line-height:1.6;">
+    ${lines.map((l) => esc(l)).join("<br>")}
+  </td></tr></table>`;
+  await sendEmail({
+    to,
+    subject: `Liste d'attente · ${e.name}`,
+    html: ownerFrame("Nouvelle inscription à la liste d'attente", inner),
+    text: lines.join("\n"),
+    replyTo: e.email,
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Owner notifications
 // ---------------------------------------------------------------------------
 

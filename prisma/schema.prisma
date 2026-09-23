@@ -129,6 +129,8 @@ model Booking {
   referralCode          String?
   referralDiscountCents Int       @default(0)
   referralRewardedAt    DateTime?
+  // "Time for your fill" nudge, ~18 days after a completed set
+  rebookNudgeSentAt     DateTime?
 
   customerId String?
   customer   Customer? @relation(fields: [customerId], references: [id])
@@ -258,4 +260,20 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+/// Clients who asked to be told when a spot frees up (calendar full or the day they wanted was taken).
+model Waitlist {
+  id          String    @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  serviceSlug String?
+  wantedDate  String?
+  locale      String    @default("fr")
+  notifiedAt  DateTime?
+  closedAt    DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([notifiedAt])
 }

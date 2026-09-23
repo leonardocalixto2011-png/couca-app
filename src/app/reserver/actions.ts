@@ -10,6 +10,8 @@ import {
   type Slot,
 } from "@/lib/booking";
 import { getStripe } from "@/lib/stripe";
+import { prisma } from "@/lib/prisma";
+import { sendOwnerWaitlistNotice, sendWaitlistAck } from "@/lib/email";
 import { sendBookingConfirmation, sendOwnerBookingNotice } from "@/lib/email";
 import { createDepositCheckout } from "@/lib/deposit";
 
@@ -38,6 +40,52 @@ export async function fetchOpenDates(input: {
   try {
     return { ok: true, dates: await listOpenDates(input) };
   } catch {
+    return { ok: false };
+  }
+}
+
+/** Client asks to be told when a spot frees up. */
+export async function joinWaitlist(input: {
+  name: string;
+  email: string;
+  phone?: string;
+  serviceSlug?: string;
+  serviceName?: string;
+  wantedDate?: string;
+  locale: "fr" | "en";
+}): Promise<{ ok: boolean }> {
+  const email = input.email.trim().toLowerCase();
+  const name = input.name.trim();
+  if (!name || !/^[^@s]+@[^@s]+.[^@s]+$/.test(email)) return { ok: false };
+  try {
+    const recent = await prisma.waitlist.findFirst({
+      where: { email, closedAt: null, createdAt: { gt: new Date(Date.now() - 7 * 86400e3) } },
+      select: { id: true },
+    });
+    if (!recent) {
+      await prisma.waitlist.create({
+        data: {
+          name,
+          email,
+          phone: input.phone?.trim() || null,
+          serviceSlug: input.serviceSlug || null,
+          wantedDate: input.wantedDate || null,
+          locale: input.locale,
+        },
+      });
+      const entry = {
+        name,
+        email,
+        phone: input.phone?.trim() || null,
+        serviceName: input.serviceName ?? null,
+        wantedDate: input.wantedDate ?? null,
+        locale: input.locale,
+      };
+      await Promise.all([sendWaitlistAck(entry), sendOwnerWaitlistNotice(entry)]);
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error("[waitlist] failed", err);
     return { ok: false };
   }
 }

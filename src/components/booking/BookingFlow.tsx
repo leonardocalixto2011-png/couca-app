@@ -9,6 +9,7 @@ import { DEPOSIT_CENTS, BOOKING_HORIZON_DAYS, STUDIO_TZ } from "@/lib/policy";
 import { fetchOpenDates, fetchSlots, submitBooking, type SlotsResult } from "@/app/reserver/actions";
 import type { BookableService, Slot } from "@/lib/booking";
 import { InspoUpload } from "./InspoUpload";
+import { WaitlistForm } from "./WaitlistForm";
 
 type Props = {
   sets: BookableService[];
@@ -265,6 +266,9 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill, inspoEnabled 
               {t("book.fullyBooked")}
             </p>
           )}
+          {!datesPending && openSet && !nextOpen && (
+            <WaitlistForm serviceSlug={serviceSlug} serviceName={svc ? name_(svc) : undefined} />
+          )}
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
             {days.map((d) => {
               const free = openSet ? openSet.has(d.iso) : d.open;
@@ -304,7 +308,14 @@ export function BookingFlow({ sets, addons, openWeekdays, prefill, inspoEnabled 
             <p className="text-sm text-ink-soft">{t("book.closed")}</p>
           )}
           {!pending && slotsState?.ok && !slotsState.closed && slotsState.slots.length === 0 && (
-            <p className="text-sm text-ink-soft">{t("book.noSlots")}</p>
+            <>
+              <p className="text-sm text-ink-soft">{t("book.noSlots")}</p>
+              <WaitlistForm
+                serviceSlug={serviceSlug}
+                serviceName={svc ? name_(svc) : undefined}
+                wantedDate={dateISO ?? undefined}
+              />
+            </>
           )}
           {!pending && slotsState?.ok && slotsState.slots.length > 0 && (
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
